@@ -1,0 +1,16 @@
+{
+  "name": "remnotes-backend",
+  "version": "1.0.0",
+  "description": "RemBook is the second name- A notes app that you can write and remember your stuff from",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongoose": "^8.12.1"
+  }
+}

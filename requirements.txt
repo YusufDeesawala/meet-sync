@@ -1,7 +1,6 @@
-fastapi
-uvicorn
-sounddevice
-scipy
-numpy
-openai-whisper
-keyboard
+fastapi 
+uvicorn 
+whisper 
+openai-whisper 
+pydantic 
+python-multipart

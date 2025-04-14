@@ -2,3 +2,5 @@ groq
 instructor
 pydantic
 python-dotenv
+flask 
+flask-cors

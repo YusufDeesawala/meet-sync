@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Transcription</title>
+    <title>Meeting Assistant</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
+            justify-content: flex-start;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
             background-color: #f4f4f9;
         }
-        h1 {
+        h1, h2 {
             color: #333;
         }
         .controls {
@@ -30,42 +31,129 @@
             color: white;
             border: none;
             border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
         }
         button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
         }
-        #transcription {
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            width: 100%;
+        }
+        .panel {
             margin-top: 20px;
             padding: 15px;
             background-color: white;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
             width: 100%;
+        }
+        #transcription {
             min-height: 100px;
             white-space: pre-wrap;
+        }
+        #actionItems {
+            min-height: 100px;
+        }
+        .item-card {
+            border-left: 4px solid #007bff;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+        }
+        .item-card.note {
+            border-left-color: #17a2b8;
+        }
+        .item-card.email {
+            border-left-color: #dc3545;
+        }
+        .item-card.calendar_event {
+            border-left-color: #28a745;
+        }
+        .item-card.todo, .item-card.to_do {
+            border-left-color: #ffc107;
+        }
+        .item-card.web_search {
+            border-left-color: #6f42c1;
+        }
+        .item-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-transform: capitalize;
+        }
+        .item-content {
+            margin-bottom: 5px;
+        }
+        .item-detail {
+            font-size: 0.9em;
+            color: #666;
         }
         #error {
             color: red;
             margin-top: 10px;
         }
+        .status {
+            font-style: italic;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #007bff;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-    <h1>Audio Transcription</h1>
-    <div class="controls">
-        <button id="startBtn">Start Recording</button>
-        <button id="stopBtn" disabled>Stop Recording</button>
+    <h1>Meeting Assistant</h1>
+    <div class="container">
+        <div class="controls">
+            <button id="startBtn">Start Recording</button>
+            <button id="stopBtn" disabled>Stop Recording</button>
+        </div>
+        
+        <div class="panel">
+            <h2>Transcription</h2>
+            <div class="status" id="transcriptionStatus">Ready to record</div>
+            <div id="transcription">Transcription will appear here...</div>
+        </div>
+        
+        <div class="spinner" id="spinner"></div>
+        
+        <div class="panel">
+            <h2>Action Items</h2>
+            <div class="status" id="actionItemsStatus">No action items yet</div>
+            <div id="actionItems">Action items will appear here after transcription...</div>
+        </div>
+        
+        <div id="error"></div>
     </div>
-    <div id="transcription">Transcription will appear here...</div>
-    <div id="error"></div>
 
     <script>
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const transcriptionDiv = document.getElementById('transcription');
+        const actionItemsDiv = document.getElementById('actionItems');
         const errorDiv = document.getElementById('error');
+        const spinner = document.getElementById('spinner');
+        const transcriptionStatus = document.getElementById('transcriptionStatus');
+        const actionItemsStatus = document.getElementById('actionItemsStatus');
+        
         let mediaRecorder;
         let audioChunks = [];
 
@@ -86,8 +174,8 @@
                     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     audioChunks = []; // Reset chunks
 
-                    // Send audio to FastAPI endpoint
-                    await sendAudioToServer(audioBlob);
+                    // Send audio to server
+                    await processAudio(audioBlob);
 
                     // Stop the microphone stream
                     stream.getTracks().forEach(track => track.stop());
@@ -97,7 +185,10 @@
                 mediaRecorder.start();
                 startBtn.disabled = true;
                 stopBtn.disabled = false;
-                transcriptionDiv.textContent = 'Recording...';
+                transcriptionStatus.textContent = 'Recording...';
+                transcriptionDiv.textContent = '';
+                actionItemsStatus.textContent = 'Waiting for recording to complete...';
+                actionItemsDiv.textContent = '';
                 errorDiv.textContent = '';
             } catch (err) {
                 errorDiv.textContent = 'Error accessing microphone: ' + err.message;
@@ -110,13 +201,35 @@
                 mediaRecorder.stop();
                 startBtn.disabled = false;
                 stopBtn.disabled = true;
-                transcriptionDiv.textContent = 'Processing...';
+                transcriptionStatus.textContent = 'Processing audio...';
+                spinner.style.display = 'block';
             }
         });
 
-        // Send audio to FastAPI /transcribe endpoint
-        async function sendAudioToServer(audioBlob) {
+        // Process audio: transcribe then extract action items
+        async function processAudio(audioBlob) {
             try {
+                // Step 1: Transcribe the audio
+                const transcription = await transcribeAudio(audioBlob);
+                
+                if (!transcription) {
+                    return; // Error already handled in transcribeAudio
+                }
+                
+                // Step 2: Extract action items
+                await extractActionItems(transcription);
+                
+            } catch (err) {
+                errorDiv.textContent = 'Processing error: ' + err.message;
+                spinner.style.display = 'none';
+            }
+        }
+
+        // Send audio to /transcribe endpoint
+        async function transcribeAudio(audioBlob) {
+            try {
+                transcriptionStatus.textContent = 'Transcribing audio...';
+                
                 const formData = new FormData();
                 formData.append('file', audioBlob, 'recording.webm');
 
@@ -129,15 +242,107 @@
 
                 if (response.ok && result.transcription) {
                     transcriptionDiv.textContent = result.transcription;
-                    errorDiv.textContent = '';
+                    transcriptionStatus.textContent = 'Transcription complete';
+                    return result.transcription;
                 } else {
-                    transcriptionDiv.textContent = 'Transcription failed.';
-                    errorDiv.textContent = result.error || 'Unknown error';
+                    transcriptionStatus.textContent = 'Transcription failed';
+                    errorDiv.textContent = result.error || 'Unknown transcription error';
+                    spinner.style.display = 'none';
+                    return null;
                 }
             } catch (err) {
-                transcriptionDiv.textContent = 'Transcription failed.';
-                errorDiv.textContent = 'Network error: ' + err.message;
+                transcriptionStatus.textContent = 'Transcription failed';
+                errorDiv.textContent = 'Network error during transcription: ' + err.message;
+                spinner.style.display = 'none';
+                return null;
             }
+        }
+
+        // Send transcription to /extract-action-items endpoint
+        async function extractActionItems(transcription) {
+            try {
+                actionItemsStatus.textContent = 'Extracting action items...';
+                
+                const response = await fetch('http://localhost:8000/extract-action-items', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ transcript: transcription })
+                });
+
+                const result = await response.json();
+                spinner.style.display = 'none';
+
+                if (response.ok && result.items) {
+                    displayActionItems(result.items);
+                    actionItemsStatus.textContent = `${result.items.length} action items extracted`;
+                } else {
+                    actionItemsStatus.textContent = 'Failed to extract action items';
+                    actionItemsDiv.textContent = 'Could not extract action items.';
+                    errorDiv.textContent = result.error || 'Unknown error extracting action items';
+                }
+            } catch (err) {
+                spinner.style.display = 'none';
+                actionItemsStatus.textContent = 'Failed to extract action items';
+                errorDiv.textContent = 'Network error during extraction: ' + err.message;
+            }
+        }
+
+        // Display action items in UI
+        function displayActionItems(items) {
+            actionItemsDiv.innerHTML = '';
+            
+            if (items.length === 0) {
+                actionItemsDiv.textContent = 'No action items found in the transcription.';
+                return;
+            }
+
+            items.forEach(item => {
+                const itemCard = document.createElement('div');
+                itemCard.className = `item-card ${item.type}`;
+                
+                const title = document.createElement('div');
+                title.className = 'item-title';
+                title.textContent = item.type.replace('_', ' ');
+                itemCard.appendChild(title);
+                
+                const content = document.createElement('div');
+                content.className = 'item-content';
+                content.textContent = item.content;
+                itemCard.appendChild(content);
+                
+                // Add additional details for email type
+                if (item.type === 'email' && (item.recipient || item.subject || item.body)) {
+                    const details = document.createElement('div');
+                    details.className = 'item-details';
+                    
+                    if (item.recipient) {
+                        const recipient = document.createElement('div');
+                        recipient.className = 'item-detail';
+                        recipient.textContent = `To: ${item.recipient}`;
+                        details.appendChild(recipient);
+                    }
+                    
+                    if (item.subject) {
+                        const subject = document.createElement('div');
+                        subject.className = 'item-detail';
+                        subject.textContent = `Subject: ${item.subject}`;
+                        details.appendChild(subject);
+                    }
+                    
+                    if (item.body) {
+                        const body = document.createElement('div');
+                        body.className = 'item-detail';
+                        body.textContent = `Body: ${item.body}`;
+                        details.appendChild(body);
+                    }
+                    
+                    itemCard.appendChild(details);
+                }
+                
+                actionItemsDiv.appendChild(itemCard);
+            });
         }
     </script>
 </body>

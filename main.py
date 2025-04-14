@@ -1,55 +1,83 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from flask import Flask, request, jsonify, send_from_directory, render_template
+from flask_cors import CORS
 import whisper
 import os
 import shutil
+from werkzeug.utils import secure_filename
 from pydantic import BaseModel
 from typing import Optional
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="Audio Transcription API")
+app = Flask(__name__, template_folder='templates')
 
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:8080", "http://localhost"],
+        "allow_headers": "*",
+        "methods": ["GET", "POST", "OPTIONS"]
+    }
+})
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:8080", "http://localhost"],  # Adjust as needed
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Configure static files and uploads
+app.config['STATIC_FOLDER'] = 'static'
+app.config['UPLOAD_FOLDER'] = 'temp'
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Ensure temp directory exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# Load Whisper model
 model = whisper.load_model("base")
 
+# Pydantic model for response structure
 class TranscriptionResponse(BaseModel):
     transcription: str
     error: Optional[str] = None
 
-@app.post("/transcribe", response_model=TranscriptionResponse)
-async def transcribe_audio(file: UploadFile = File(...)):
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory(app.config['STATIC_FOLDER'], filename)
+
+@app.route('/transcribe', methods=['POST'])
+def transcribe_audio():
     try:
-        if not file.content_type.startswith("audio/"):
-            raise HTTPException(status_code=400, detail="Invalid file type. Please upload an audio file.")
+        if 'file' not in request.files:
+            return jsonify(TranscriptionResponse(
+                transcription="",
+                error="No file provided"
+            ).dict()), 400
 
-        temp_file_path = f"temp_{file.filename}"
-        with open(temp_file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        file = request.files['file']
+        
+        # Check if file is audio
+        if not file.content_type.startswith('audio/'):
+            return jsonify(TranscriptionResponse(
+                transcription="",
+                error="Invalid file type. Please upload an audio file."
+            ).dict()), 400
 
+        # Secure filename and save temporarily
+        filename = secure_filename(file.filename)
+        temp_file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_{filename}")
+        file.save(temp_file_path)
+
+        # Transcribe audio
         result = model.transcribe(temp_file_path)
 
+        # Clean up
         os.remove(temp_file_path)
 
-        return TranscriptionResponse(transcription=result["text"])
+        return jsonify(TranscriptionResponse(
+            transcription=result["text"]
+        ).dict())
 
     except Exception as e:
-        return TranscriptionResponse(transcription="", error=str(e))
+        return jsonify(TranscriptionResponse(
+            transcription="",
+            error=str(e)
+        ).dict()), 500
 
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the Audio Transcription API. Use /transcribe to upload an audio file."}
+@app.route('/')
+def root():
+    return render_template('index.html')
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000, debug=True)

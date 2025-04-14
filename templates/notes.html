@@ -1,0 +1,7 @@
+<h2>Your Notes</h2>
+<ul>
+    {% for note in notes %}
+        <li><strong>{{ note.title }}</strong> - {{ note.description }} (Tag: {{ note.tag }})</li>
+    {% endfor %}
+</ul>
+<a href="/addnote">Add Another Note</a>

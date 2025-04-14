@@ -43,7 +43,8 @@ def login():
         flash("Login failed!", "danger")
     return render_template('login.html')
 
-@app.route('/addnote', methods=['GET', 'POST'])
+#To manually add notes and fetch it
+"""@app.route('/addnote', methods=['GET', 'POST'])
 def add_note():
     if 'token' not in session:
         return redirect(url_for('login'))
@@ -73,6 +74,6 @@ def get_notes():
     res = requests.get(f"{BASE_URL}/api/notes/fetchnotes", headers=headers)
     notes = res.json() if res.status_code == 200 else []
     return render_template('notes.html', notes=notes)
-
+"""
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True , port= 8080)

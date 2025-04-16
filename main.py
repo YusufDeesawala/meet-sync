@@ -10,10 +10,8 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
-# Load environment variables
 load_dotenv()
 
-# Initialize Flask app
 app = Flask(__name__, template_folder='templates')
 CORS(app, resources={
     r"/*": {
@@ -23,17 +21,13 @@ CORS(app, resources={
     }
 })
 
-# Configure static files and uploads
 app.config['STATIC_FOLDER'] = 'static'
 app.config['UPLOAD_FOLDER'] = 'temp'
 
-# Ensure temp directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Load Whisper model
 model = whisper.load_model("base")
 
-# Pydantic models
 class ActionItem(BaseModel):
     type: str = Field(..., description="Type of action item: note, email, calendar_event, or todo")
     content: str = Field(..., description="Content of the action item")
@@ -48,7 +42,6 @@ class TranscriptionResponse(BaseModel):
     transcription: str
     error: Optional[str] = None
 
-# Set up Groq client for action item extraction
 api_key = os.getenv("GROQ_API")
 if not api_key:
     print("Warning: GROQ_API environment variable not set. Action item extraction will not work.")
@@ -57,7 +50,6 @@ else:
     groq_client = Groq(api_key=api_key)
     groq_client = instructor.from_groq(groq_client, mode=instructor.Mode.JSON)
 
-# Routes
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory(app.config['STATIC_FOLDER'], filename)
@@ -73,22 +65,18 @@ def transcribe_audio():
 
         file = request.files['file']
         
-        # Check if file is audio
         if not file.content_type.startswith('audio/'):
             return jsonify(TranscriptionResponse(
                 transcription="",
                 error="Invalid file type. Please upload an audio file."
             ).dict()), 400
 
-        # Secure filename and save temporarily
         filename = secure_filename(file.filename)
         temp_file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_{filename}")
         file.save(temp_file_path)
 
-        # Transcribe audio
         result = model.transcribe(temp_file_path)
 
-        # Clean up
         os.remove(temp_file_path)
 
         return jsonify(TranscriptionResponse(
@@ -116,7 +104,6 @@ def extract_action_items():
         if not transcript:
             return jsonify({"error": "Transcript is required"}), 400
 
-        # Process transcript with Groq
         action_items = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             response_model=ActionItemsList,
@@ -156,18 +143,14 @@ def extract_action_items():
 def transcribe_and_extract():
     """Combined endpoint that transcribes audio and extracts action items"""
     try:
-        # First transcribe the audio
         transcription_response = transcribe_audio()
         
-        # If transcription failed, return the error
         if transcription_response[1] != 200:
             return transcription_response
         
-        # Get the transcription text
         transcription_data = json.loads(transcription_response[0].data)
         transcript = transcription_data.get("transcription", "")
         
-        # Now extract action items from the transcript
         request.data = json.dumps({"transcript": transcript}).encode('utf-8')
         request.is_json = True
         

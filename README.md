@@ -159,3 +159,63 @@ def handle_email(item):
 ```
 
 ---
+
+Got it! Here's the updated documentation for the **Add Note** API without including the `"type"` field:
+
+---
+
+### 3. 📝 Add Note (Create Notes from Meeting Context)
+
+This endpoint allows you to add notes based on the context from a meeting or any other input. You can use it to save notes, which will include a title, description, and tags.
+
+#### ✅ Workflow:
+
+- Send a `POST` request to the following URL:
+  ```
+  http://localhost:5000/api/notes/addnote
+  ```
+
+- Include the following headers:
+  ```
+  Content-Type: application/json
+  Authorization: Bearer <jwt-token>
+  ```
+
+#### 💻 Sample Input (to `/api/notes/addnote` endpoint):
+
+```json
+{
+  "title": "Sample",
+  "description": "This is the Sample Note",
+  "tag": "Sample"
+}
+```
+
+#### 💻 How to Test with Postman:
+
+1. Open [Postman](https://postman.com).
+2. Create a new **POST** request to:  
+   ```
+   http://localhost:5000/api/notes/addnote
+   ```
+3. Go to the **Headers** tab and add the following headers:
+   ```
+   Key: Content-Type, Value: application/json
+   Key: auth-token, Value: <jwt-token>
+   ```
+4. Go to the **Body** tab → Select **raw** → Choose **JSON** from the dropdown.
+5. Paste the sample input above.
+6. Click **Send**.
+
+You should receive a response like:
+
+```json
+{
+  "status": "success",
+  "message": "Note added successfully"
+}
+```
+
+If something goes wrong (for example, missing required fields or invalid token), you’ll receive an error message with `status: "error"`.
+
+---

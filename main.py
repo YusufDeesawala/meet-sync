@@ -17,21 +17,32 @@ EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 @app.route('/process_meeting_output', methods=['POST'])
 def process_meeting_output():
-    data = request.json
+    data = request.get_json()
+    
+    # 🔍 Debug output
+    print("Incoming data:", data)
+    
+    if not isinstance(data, list):
+        return jsonify({"error": "Expected a list of items"}), 400
+
     results = []
 
     for item in data:
-        if item['type'] == 'note':
+        if not isinstance(item, dict):
+            return jsonify({"error": "Each item must be a dictionary"}), 400
+
+        if item.get('type') == 'note':
             result = handle_note(item)
-        elif item['type'] == 'email':
+        elif item.get('type') == 'email':
             result = handle_email(item)
-        elif item['type'] == 'web_search':
+        elif item.get('type') == 'web_search':
             result = handle_web_search(item)
         else:
-            result = {"status": "error", "message": f"Unknown type: {item['type']}"}
+            result = {"status": "error", "message": f"Unknown type: {item.get('type')}"}
         results.append(result)
 
     return jsonify(results), 200
+
 
 def handle_email(item):
     try:
@@ -67,6 +78,5 @@ def handle_web_search(item):
     except Exception as e:
         return {"status": "error", "agent": "web_search", "message": str(e)}
 
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,port=2000)

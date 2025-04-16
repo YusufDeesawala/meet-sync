@@ -1,11 +1,13 @@
 //S58l24ewNvl2IaLD
 //Since i did'nt bring my note book i'll write here 
+require('dotenv').config();
+
 const connectToMongo=require('./db')
 const express= require('express')
 const cors= require('cors')
 connectToMongo();
 const app= express()
-const port=5000
+const port=process.env.PORT;
 app.use(cors())
 app.use(express.json())
 

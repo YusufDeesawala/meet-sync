@@ -6,7 +6,7 @@ app.secret_key = 'supersecretkey'
 
 BASE_URL = 'http://localhost:5000'
 auth_token = None
-print(auth_token)
+
 @app.route('/')
 def home():
     return render_template('index.html')

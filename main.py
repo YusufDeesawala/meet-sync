@@ -6,7 +6,7 @@ app.secret_key = 'supersecretkey'
 
 BASE_URL = 'http://localhost:5000'
 auth_token = None
-
+print(auth_token)
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -44,7 +44,7 @@ def login():
     return render_template('login.html')
 
 #To manually add notes and fetch it
-"""@app.route('/addnote', methods=['GET', 'POST'])
+@app.route('/addnote', methods=['GET', 'POST'])
 def add_note():
     if 'token' not in session:
         return redirect(url_for('login'))
@@ -74,6 +74,6 @@ def get_notes():
     res = requests.get(f"{BASE_URL}/api/notes/fetchnotes", headers=headers)
     notes = res.json() if res.status_code == 200 else []
     return render_template('notes.html', notes=notes)
-"""
+
 if __name__ == '__main__':
     app.run(debug=True , port= 8080)

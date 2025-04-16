@@ -8,7 +8,7 @@ var fetchUser= require('../middleware/login')
 const JWT_SECRET='Hussainissex$y'
 // Create a user using Post "/api/auth/. Doesn't require auth"
 //This is Route 1 for creating users.
-router.post('/',[
+router.post('/register',[
     //for valisation we are gonna add body which is a function is express VALIDATOR, vo email should be proper, password should be strong and name should consist of more than 3 characters
     body('name','enter a valid name').isLength({min:3}),
     body('email','enter a valid email').isEmail(),

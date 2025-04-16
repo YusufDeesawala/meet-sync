@@ -61,7 +61,7 @@ def transcribe_audio():
             return jsonify(TranscriptionResponse(
                 transcription="",
                 error="No file provided"
-            ).dict()), 400
+            ).model_dump()), 400
 
         file = request.files['file']
         
@@ -69,7 +69,7 @@ def transcribe_audio():
             return jsonify(TranscriptionResponse(
                 transcription="",
                 error="Invalid file type. Please upload an audio file."
-            ).dict()), 400
+            ).model_dump()), 400
 
         filename = secure_filename(file.filename)
         temp_file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_{filename}")
@@ -81,13 +81,13 @@ def transcribe_audio():
 
         return jsonify(TranscriptionResponse(
             transcription=result["text"]
-        ).dict())
+        ).model_dump())
 
     except Exception as e:
         return jsonify(TranscriptionResponse(
             transcription="",
             error=str(e)
-        ).dict()), 500
+        ).model_dump()), 500
 
 @app.route('/extract-action-items', methods=['POST'])
 def extract_action_items():

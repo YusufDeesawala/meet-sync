@@ -99,6 +99,3 @@ Open to PRs, ideas, and improvements! Make sure to keep your code clean and read
 ## 📄 License
 
 MIT
-```
-
----

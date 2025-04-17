@@ -3,6 +3,9 @@
 
 This is the backend API service for managing notes. It connects to a MongoDB database using Mongoose and provides a simple API layer built with Express.js.
 
+
+The service is live at = [Link](http://meet-sync-backend.vercel.app/)
+
 ---
 
 ## ⚙️ Getting Started

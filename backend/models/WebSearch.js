@@ -5,28 +5,20 @@ const WebSearchSchema = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
-    required: true, // optional, but good for strictness
+    required: true, // This ensures that every document is associated with a user
   },
-  agent: {
+  title: {
     type: String,
     required: true,
   },
-  status: {
+  content: {
     type: String,
     required: true,
   },
-  results: [
-    {
-      title: {
-        type: String,
-        required: true,
-      },
-      snippet: {
-        type: String,
-        required: true,
-      },
-    },
-  ],
+  reference_link: {
+    type: String,
+    required: true,
+  },
   timestamp: {
     type: Date,
     default: Date.now,

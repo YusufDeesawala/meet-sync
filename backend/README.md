@@ -261,7 +261,3 @@ PRs are welcome! Just make sure you follow best practices and keep it clean.
 
 MIT — free to use and modify.
 
-```
-
----
-

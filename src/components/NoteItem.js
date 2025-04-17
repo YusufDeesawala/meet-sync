@@ -10,7 +10,7 @@ import noteContext from '../context/notes/noteContext';
 const NoteItem = (props) => {
     const context=useContext(noteContext)
     const {deleteNote}=context
-    const { note } = props;
+    const { note, updateNote } = props;
     const { title, description } = note;
 
     return (
@@ -32,7 +32,7 @@ const NoteItem = (props) => {
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
                     {/* Edit Button */}
-                    <IconButton variant="soft" color="primary">
+                    <IconButton variant="soft" color="primary" onClick={() => { updateNote(note) }}>
                         <NotebookPen/>
                     </IconButton>
 

@@ -12,7 +12,7 @@ router.post('/',[
     //for valisation we are gonna add body which is a function is express VALIDATOR, vo email should be proper, password should be strong and name should consist of more than 3 characters
     body('name','enter a valid name').isLength({min:3}),
     body('email','enter a valid email').isEmail(),
-    body('password', 'nigga strong password').isStrongPassword(),
+    body('password', 'nigga strong password required').isStrongPassword(),
 ],async(req, res)=>{
         const error= validationResult(req)
         if(!error.isEmpty()){

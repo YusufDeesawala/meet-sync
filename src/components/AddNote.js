@@ -18,7 +18,7 @@ import noteContext from '../context/notes/noteContext';
 const AddNote = () => {
   const context = useContext(noteContext);
   const { addNote } = context;
-  const [note, setNote] = useState({title:"", description:"", tag:"default"})
+  const [note, setNote] = useState({ title: "", description: "", tag: "default" })
 
   // States
   const [anchorEl, setAnchorEl] = useState(null);
@@ -32,7 +32,7 @@ const AddNote = () => {
   };
 
   const onChange = (e) => {
-    setNote({...note, [e.target.name]:e.target.value})
+    setNote({ ...note, [e.target.name]: e.target.value })
   };
 
   const fontOptions = [
@@ -171,11 +171,6 @@ const AddNote = () => {
                   </MenuItem>
                 ))}
               </Menu>
-
-              {/* Send Button */}
-              <Button sx={{ ml: 'auto' }} onClick={handleSend}>
-                Send
-              </Button>
             </Box>
           }
           sx={[
@@ -188,6 +183,26 @@ const AddNote = () => {
           ]}
         />
       </FormControl>
+      <FormControl sx={{ mb: 2 }}>
+        <FormLabel sx={{ mb: 1, fontWeight: 'bold' }}>Tag</FormLabel>
+        <Textarea
+          placeholder="Enter a Tag..."
+          minRows={1}
+          name="tag"
+          onChange={onChange}
+          value={note.tag}
+          sx={{
+            fontWeight: 'bold',
+            backgroundColor: '#fff',
+            borderRadius: '8px',
+            fontFamily: 'Arial',
+          }}
+        />
+      </FormControl>
+      {/* Send Button */}
+      <Button sx={{ ml: 'auto' }} onClick={handleSend}>
+        Send
+      </Button>
     </Box>
   );
 };

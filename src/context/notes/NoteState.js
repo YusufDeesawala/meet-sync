@@ -34,6 +34,8 @@ const NoteState=(props)=>{
           },
           body:JSON.stringify({title, description,tag})
         })
+        const json = await response.json()
+        console.log(json)
         console.log("Adding a new note")
         const note={
           "_id": "67e3dca28decb40e0156904787",
@@ -49,7 +51,17 @@ const NoteState=(props)=>{
 
 
       //Delete a note
-      const deleteNote=(id)=>{
+      const deleteNote=async (id)=>{
+        const url =`${host}/api/notes/deletenote/${id}`
+        const response=await fetch(url,{
+          method:'DELETE',
+          headers:{
+            'Content-Type':'application/json',
+            'auth-token':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjdkNjc0MmQ1MjhiNTY4YmFiZWFmNWQ5In0sImlhdCI6MTc0MjUzNzcxNH0._23IN1LDxubcJtLtEQ0bHLBcbDHYuiS6gVIcBVqQi8I'
+          },
+        })
+        const json= await response.json()
+        console.log(json)
         console.log("Deleting note with id",id)
         const newNote=notes.filter((note)=>{
           //Return all notes except the one with the given Id , basically filter out the note with the given ID 
@@ -70,6 +82,7 @@ const NoteState=(props)=>{
           body:JSON.stringify({title, description,tag})
         })
         const json=await response.json()
+        console.log(json)
         //Logic to edit note
         for (let index = 0; index < notes.length; index++) {
           const element = notes[index];

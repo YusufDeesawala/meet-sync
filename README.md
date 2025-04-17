@@ -9,6 +9,10 @@ This Flask app provides two key features:
 
 This version is the **latest** release of **Routes_testing**, and it's designed to automatically search for information on Google and send follow-up emails.
 
+
+
+The service is live at = [Link](https://meet-sync-backend-2.onrender.com/)
+
 ---
 
 ## Table of Contents

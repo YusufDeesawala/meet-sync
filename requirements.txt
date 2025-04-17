@@ -1,6 +1,5 @@
-Flask==2.3.2 
-requests==2.28.2
-python-dotenv==0.21.0
-pymongo[srv]==4.3.3
-beautifulsoup4==4.11.1
-googlesearch-python==1.1.0
+Flask
+requests
+python-dotenv
+beautifulsoup4
+googlesearch-python

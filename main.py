@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+import time
 
 load_dotenv()
 
@@ -26,7 +27,8 @@ app.config['UPLOAD_FOLDER'] = 'temp'
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-model = whisper.load_model("base")
+# Use the "tiny" model for faster transcription
+model = whisper.load_model("tiny")
 
 class ActionItem(BaseModel):
     type: str = Field(..., description="Type of action item: note, email, calendar_event, or todo")
@@ -120,7 +122,11 @@ def transcribe_audio():
         temp_file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_{filename}")
         file.save(temp_file_path)
 
+        # Log transcription start time
+        start_time = time.time()
         result = model.transcribe(temp_file_path)
+        transcription_time = time.time() - start_time
+        print(f"Transcription took {transcription_time:.2f} seconds for file {filename}")
 
         os.remove(temp_file_path)
 
@@ -203,7 +209,6 @@ def extract_action_items():
         except Exception as e:
             print(f"Failed to save action_items.json: {e}")
 
-        # Convert action items to separate JSON files
         convert_action_items(output_data)
 
         return jsonify({
@@ -233,6 +238,74 @@ def transcribe_and_extract():
     
     except Exception as e:
         return jsonify({"error": f"Error in combined processing: {str(e)}"}), 500
+    
+@app.route('/get-json-files', methods=['GET'])
+def get_json_files():
+    try:
+        json_files = {
+            'emails': [],
+            'web_searches': [],
+            'notes': []
+        }
+
+        if os.path.exists('emails.json'):
+            with open('emails.json', 'r', encoding='utf-8') as f:
+                json_files['emails'] = json.load(f)
+        
+        if os.path.exists('web_search.json'):
+            with open('web_search.json', 'r', encoding='utf-8') as f:
+                json_files['web_searches'] = json.load(f)
+        
+        if os.path.exists('notes.json'):
+            with open('notes.json', 'r', encoding='utf-8') as f:
+                json_files['notes'] = json.load(f)
+
+        return jsonify(json_files), 200
+    except Exception as e:
+        return jsonify({'error': f'Error reading JSON files: {str(e)}'}), 500
+    
+@app.route('/update-json-file', methods=['POST'])
+def update_json_file():
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Request must contain JSON data'}), 400
+
+        data = request.get_json()
+        file_type = data.get('file_type')
+        index = data.get('index')
+        updated_item = data.get('item')
+
+        if not file_type or index is None or not updated_item:
+            return jsonify({'error': 'Missing file_type, index, or item'}), 400
+
+        file_map = {
+            'emails': 'emails.json',
+            'web_searches': 'web_search.json',
+            'notes': 'notes.json'
+        }
+
+        if file_type not in file_map:
+            return jsonify({'error': 'Invalid file_type'}), 400
+
+        file_path = file_map[file_type]
+
+        if not os.path.exists(file_path):
+            return jsonify({'error': f'{file_path} does not exist'}), 404
+
+        with open(file_path, 'r', encoding='utf-8') as f:
+            items = json.load(f)
+
+        if index < 0 or index >= len(items):
+            return jsonify({'error': 'Invalid index'}), 400
+
+        items[index] = updated_item
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(items, f, indent=2)
+
+        return jsonify({'message': 'Item updated successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': f'Error updating JSON file: {str(e)}'}), 500
 
 @app.route('/')
 def root():

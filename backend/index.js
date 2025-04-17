@@ -14,7 +14,9 @@ app.use(express.json())
 //Available Routes...
 app.use('/api/auth', require('./routes/auth')) //We will use app.use to connect routes.
 app.use('/api/notes', require('./routes/notes')) //We will use app.use to connect routes.
+app.use('/api/websearch', require('./routes/WebSearch'))
 // app.use('/api/auth', require['./routes/notes']) //We will use app.use to connect routes.
+
 app.get('/',(req, res)=>{ 
     res.send('Hello Duniya!') //App.get will basically get yout request(res) in which the response will be "Login" eg: http://localhost:5000/login hence redirecting us to the login page. orrr the LOGIN REQUEST
 })

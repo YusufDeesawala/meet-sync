@@ -4,3 +4,6 @@ __pycache__/
 .env
 temp/
 action_items.json
+notes.json
+web_search.json
+email.json

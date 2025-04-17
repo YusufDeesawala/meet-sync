@@ -15,6 +15,8 @@ app.use(express.json())
 app.use('/api/auth', require('./routes/auth')) //We will use app.use to connect routes.
 app.use('/api/notes', require('./routes/notes')) //We will use app.use to connect routes.
 app.use('/api/websearch', require('./routes/WebSearch'))
+app.use('/api/todo', require('./routes/todo'))
+
 // app.use('/api/auth', require['./routes/notes']) //We will use app.use to connect routes.
 
 app.get('/',(req, res)=>{ 

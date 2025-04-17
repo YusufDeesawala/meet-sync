@@ -1,0 +1,7 @@
+Flask
+requests
+python-dotenv
+pymongo[srv]
+requests 
+beautifulsoup4 
+googlesearch-python

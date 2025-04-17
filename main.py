@@ -88,6 +88,9 @@ def convert_action_items(action_items):
         if notes:
             with open("notes.json", "w", encoding="utf-8") as f:
                 json.dump(notes, f, indent=2)
+        action_items_file = "action_items.json"
+        if os.path.exists(action_items_file):
+            os.remove(action_items_file)
         print("Conversion complete. Output saved to emails.json, web_search.json, and notes.json (if applicable).")
     except Exception as e:
         print(f"Failed to save converted JSON files: {e}")

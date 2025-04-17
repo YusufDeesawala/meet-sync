@@ -1,85 +1,94 @@
 
 ---
 
-## 🚀 Features
+# Flask App with Email and Web Scraping 🚀
 
-### 1. 🌐 Web Search Agent (Powered by SerpAPI)
+This Flask app provides two key features:
+1. **Extract Data from Web** - Search and scrape content from the web.
+2. **Send Email** - Send emails using Gmail's SMTP server.
 
-This agent allows you to automatically perform a Google search based on meeting discussion content. For example, if someone says _"Can you check the latest updates in AI?"_, the app will extract that and trigger a real-time search using [SerpAPI](https://serpapi.com/).
-
-#### ✅ Workflow:
-
-- Input JSON includes an item with `"type": "web_search"` and a `"content"` field containing the search query.
-- The agent calls SerpAPI and extracts titles + snippets from the organic results.
-- Results are returned as structured JSON.
-
-#### 🧪 Sample Input (to `/process_meeting_output` endpoint)
-
-```json
-[
-  {
-    "type": "web_search",
-    "content": "latest updates in artificial intelligence 2025"
-  }
-]
-```
-
-#### 💻 How to Test with Postman
-
-1. Open [Postman](https://postman.com)
-2. Create a new **POST** request to:  
-   ```
-   http://localhost:5000/process_meeting_output
-   ```
-3. Go to the **Body** tab → Select **raw** → Choose **JSON** from the dropdown
-4. Paste the sample input above
-5. Click **Send**
-
-Postman will return a response like:
-
-```json
-[
-  {
-    "status": "success",
-    "agent": "web_search",
-    "results": [
-      {
-        "title": "OpenAI releases new AI tools in 2025",
-        "snippet": "OpenAI has introduced a new model focused on better reasoning..."
-      },
-      {
-        "title": "Google DeepMind 2025 Innovations",
-        "snippet": "Google DeepMind unveiled a new agentic framework..."
-      }
-    ]
-  }
-]
-```
-
-#### 🔧 Environment Variables Required (in `.env` file)
-
-```env
-SERP_API_KEY=your_serpapi_key_here
-```
+This version is the **latest** release of **Routes_testing**, and it's designed to automatically search for information on Google and send follow-up emails.
 
 ---
 
+## Table of Contents
 
-### 2. 📧 Email Agent (Send Follow-Ups Automatically)
-
-This agent sends follow-up emails based on meeting content. If someone says something like _"Send a follow-up to the client with the meeting summary"_, the AI can extract that intent and pass it to this agent.
-
-#### ✅ Workflow:
-
-- The input JSON includes an item with `"type": "email"` and required fields:
-  - `recipient`
-  - `subject`
-  - `body`
-- The agent uses SMTP with SSL to log in to your email account and send the email securely.
+1. [🌐 Extract Data from Web](#extract-data-from-web)
+    - [✅ Workflow](#workflow)
+    - [🧪 Sample Input](#sample-input)
+    - [💻 How to Test with Postman](#how-to-test-with-postman)
+    - [🔧 Environment Variables Required](#environment-variables-required)
+2. [📧 Send Email](#send-email)
+    - [✅ Workflow](#workflow-1)
+    - [📩 Sample Input](#sample-input-1)
+    - [💻 How to Test with Postman](#how-to-test-with-postman-1)
+    - [🔧 Environment Variables Required](#environment-variables-required-1)
+    - [🧠 Behind the Scenes](#behind-the-scenes)
 
 ---
 
-#### 📩 Sample Input (to `/process_meeting_output` endpoint)
+## 🌐 Extract Data from Web
+
+### ✅ Workflow
+The `/extract` endpoint extracts content from a webpage by performing a Google search for the given title. Here's the process:
+1. The user sends a **POST** request with a `title` in the body.
+2. The app performs a Google search using **SerpAPI** and gets the top search result.
+3. The app scrapes the content from the resulting page using **BeautifulSoup**.
+4. The result (title, content, and URL) is sent back in the response.
+
+### 🧪 Sample Input
+**POST request to**: `/extract`
+
+```json
+{
+  "title": "Artificial Intelligence in Healthcare"
+}
+```
+
+- **title** (required): A string representing the title or topic to search for.
+
+### 💻 How to Test with Postman
+1. Open **Postman**.
+2. Create a new `POST` request to:  
+   `http://localhost:2000/extract`
+3. Go to the **Headers** tab and add the following:
+   - Key: `Content-Type`, Value: `application/json`
+   - Key: `auth-token`, Value: `<jwt-token>` (your valid JWT token)
+4. Go to the **Body** tab → Select **raw** → Choose **JSON** from the dropdown.
+5. Paste the **sample input** provided above.
+6. Click **Send**.
+
+You should receive a response similar to:
+
+```json
+{
+  "title": "Artificial Intelligence in Healthcare",
+  "content": "Artificial Intelligence (AI) is revolutionizing healthcare by enhancing diagnostics...",
+  "reference_link": "https://www.example.com/ai-healthcare"
+}
+```
+
+### 🔧 Environment Variables Required (in .env file)
+To use the `extract` functionality, ensure you set the following environment variables:
+```bash
+EMAIL_SENDER=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password
+```
+
+**For Gmail users:**  
+You must have 2FA enabled on your Gmail account. Then, create an **App Password** here: [Google App Passwords](https://myaccount.google.com/apppasswords).
+
+---
+
+## 📧 Send Email
+
+### ✅ Workflow
+The `/email` endpoint sends emails based on the provided input. Here's the process:
+1. The user sends a **POST** request with the email's details (recipient, subject, body).
+2. The app uses Gmail’s SMTP server to send the email securely.
+
+### 📩 Sample Input
+**POST request to**: `/email`
 
 ```json
 [
@@ -92,53 +101,55 @@ This agent sends follow-up emails based on meeting content. If someone says some
 ]
 ```
 
----
+- **type**: Should always be `email`.
+- **recipient**: The email address of the recipient.
+- **subject**: The subject of the email.
+- **body**: The content of the email.
 
-#### 💻 How to Test with Postman
-
-1. Open [Postman](https://postman.com)
-2. Create a new **POST** request to:  
-   ```
-   http://localhost:5000/process_meeting_output
-   ```
-3. Go to the **Headers** tab and add:
-   ```
-   Content-Type: application/json
-   ```
-4. Go to the **Body** tab → Select **raw** → Choose **JSON** from the dropdown
-5. Paste the sample input above
-6. Click **Send**
+### 💻 How to Test with Postman
+1. Open **Postman**.
+2. Create a new `POST` request to:  
+   `http://localhost:2000/email`
+3. Go to the **Headers** tab and add the following:
+   - Key: `Content-Type`, Value: `application/json`
+   - Key: `auth-token`, Value: `<jwt-token>` (your valid JWT token)
+4. Go to the **Body** tab → Select **raw** → Choose **JSON** from the dropdown.
+5. Paste the **sample input** provided above.
+6. Click **Send**.
 
 You should receive a response like:
 
 ```json
-[
-  {
-    "status": "success",
-    "agent": "email",
-    "message": "Email sent"
-  }
-]
+{
+  "status": "success",
+  "agent": "email",
+  "message": "Email sent"
+}
 ```
 
-If something goes wrong (like invalid credentials), you'll get an error message with `status: "error"`.
+If there's an error (e.g., invalid credentials or missing fields), you will get a response like:
 
----
+```json
+{
+  "status": "error",
+  "agent": "email",
+  "message": "Invalid credentials"
+}
+```
 
-#### 🔧 Environment Variables Required (in `.env` file)
-
-```env
+### 🔧 Environment Variables Required (in .env file)
+To send emails using Gmail, make sure you have the following environment variables:
+```bash
 EMAIL_SENDER=youremail@gmail.com
 EMAIL_PASSWORD=your_app_password
 ```
 
-> ⚠️ For Gmail users:
-> - You must have **2FA enabled** on your account.
-> - Then create an **App Password** here: [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+**⚠️ For Gmail users:**
+- Ensure 2FA is enabled on your Gmail account.
+- Create an **App Password** here: [Google App Passwords](https://myaccount.google.com/apppasswords).
 
----
-
-#### 🧠 Behind the Scenes: How the Email Agent Works
+### 🧠 Behind the Scenes
+Here's a quick look at how the email is sent using the Gmail SMTP server:
 
 ```python
 def handle_email(item):
@@ -157,65 +168,3 @@ def handle_email(item):
     except Exception as e:
         return {"status": "error", "agent": "email", "message": str(e)}
 ```
-
----
-
-Got it! Here's the updated documentation for the **Add Note** API without including the `"type"` field:
-
----
-
-### 3. 📝 Add Note (Create Notes from Meeting Context)
-
-This endpoint allows you to add notes based on the context from a meeting or any other input. You can use it to save notes, which will include a title, description, and tags.
-
-#### ✅ Workflow:
-
-- Send a `POST` request to the following URL:
-  ```
-  http://localhost:5000/api/notes/addnote
-  ```
-
-- Include the following headers:
-  ```
-  Content-Type: application/json
-  Authorization: Bearer <jwt-token>
-  ```
-
-#### 💻 Sample Input (to `/api/notes/addnote` endpoint):
-
-```json
-{
-  "title": "Sample",
-  "description": "This is the Sample Note",
-  "tag": "Sample"
-}
-```
-
-#### 💻 How to Test with Postman:
-
-1. Open [Postman](https://postman.com).
-2. Create a new **POST** request to:  
-   ```
-   http://localhost:5000/api/notes/addnote
-   ```
-3. Go to the **Headers** tab and add the following headers:
-   ```
-   Key: Content-Type, Value: application/json
-   Key: auth-token, Value: <jwt-token>
-   ```
-4. Go to the **Body** tab → Select **raw** → Choose **JSON** from the dropdown.
-5. Paste the sample input above.
-6. Click **Send**.
-
-You should receive a response like:
-
-```json
-{
-  "status": "success",
-  "message": "Note added successfully"
-}
-```
-
-If something goes wrong (for example, missing required fields or invalid token), you’ll receive an error message with `status: "error"`.
-
----

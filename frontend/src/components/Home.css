@@ -1,59 +1,52 @@
 body, html {
     margin: 0;
     padding: 0;
-    overflow-y: hidden; /* Hide vertical scrollbar */
+    overflow-y: hidden;
     height: 100%;
-  }
+}
+
 .home-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: calc(100vh - 70px); /* adjust for header height */
+    height: calc(100vh - 70px);
     position: relative;
     overflow-y: hidden;
     padding: 2rem;
-  }
-  
-  .card-grid {
-    display: grid;
-    grid-template-columns: 1fr;
+}
+
+.card-grid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     gap: 2rem;
-    z-index: 1;
-  }
-  
-  .card {
-    background: #f5f5f5;
-    padding: 2rem 1.5rem; /* Slightly reduced horizontal padding */
-    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.card {
+    width: 150px;
+    height: 150px;
+    background: #f7f7f7;
+    border-radius: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-    width: 180px; /* Optional: more control */
-    height: 180px; /* Squarish */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-  }
-  
-  .card-icon {
-    margin-bottom: 1.25rem; /* Increased space between icon and label */
-    font-size: 2.5rem; /* Optional: enlarge icon slightly */
-  }
-  
-  .card-label {
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+    text-align: center;
+}
+
+.card-icon {
+    margin-bottom: 1.25rem;
+    font-size: 2.5rem;
+}
+
+.card-label {
     font-size: 1.4rem;
     font-weight: 600;
-  }
-
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 2.5rem;
-    justify-items: center;
-    z-index: 1;
-  }
+}
   .floating.doodle {
     position: absolute;
     width: 40px;
@@ -83,9 +76,9 @@ body, html {
   @keyframes float-6 { 0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)} }
   
   /* Optional: Adjust for responsive view */
-  @media (min-width: 600px) {
+  @media (max-width: 600px) {
     .card-grid {
-      grid-template-columns: repeat(2, 1fr);
+      flex-wrap: wrap;
     }
   }
   @media (max-width: 500px) {

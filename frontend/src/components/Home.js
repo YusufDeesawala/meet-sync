@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MdNote, MdCheckCircle } from 'react-icons/md';
+import { MdNote, MdCheckCircle, MdSearch } from 'react-icons/md';
 import './Home.css';
 
 const Home = () => {
@@ -18,6 +18,11 @@ const Home = () => {
       label: 'Todos',
       path: '/todo',
     },
+    {
+        icon:<MdSearch size={80} color='#333'/>,
+        label:'Web Search',
+        path:'/websearch'
+    }
   ];
 
   return (

@@ -12,6 +12,9 @@ import './App.css';
 import Todo from './components/Todo';
 import AddTodo from './components/AddTodo';
 import Home from './components/Home';
+import WebSearch from './components/WebSearch';
+import AddWebSearch from './components/AddWebSearch';
+import WebSearchState from './context/WebSearchState';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -29,6 +32,7 @@ function App() {
   return (
     <NoteState>
       <TodoState>
+        <WebSearchState>
         <Router>
           <div className="App">
             <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} />
@@ -78,6 +82,14 @@ function App() {
                     path="/home"
                     element={isAuthenticated ? <Home /> : <Navigate to="/login" />}
                   />
+                   <Route 
+                      path="/addwebsearch" 
+                      element={isAuthenticated ? <AddWebSearch /> : <Navigate to="/login" />} 
+                    />
+                    <Route 
+                      path="/websearch" 
+                      element={isAuthenticated ? <WebSearch /> : <Navigate to="/login" />} 
+                    />
                   <Route path='/addtodo' element={isAuthenticated? <AddTodo/>:<Navigate to={"/login"}/>}/>
                   <Route path='/todo' element={isAuthenticated ? <Todo/>: <Navigate to="/login"/>}/>
                 </Routes>
@@ -85,6 +97,7 @@ function App() {
             </AnimatePresence>
           </div>
         </Router>
+        </WebSearchState>
       </TodoState>
     </NoteState>
   );

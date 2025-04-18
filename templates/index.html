@@ -44,10 +44,28 @@
             background-color: #ffc107;
             padding: 5px 10px;
             font-size: 14px;
-            margin-top: 5px;
+            margin: 0 5px;
         }
         .edit-btn:hover {
             background-color: #e0a800;
+        }
+        .accept-btn {
+            background-color: #28a745;
+            padding: 5px 10px;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+        .accept-btn:hover {
+            background-color: #218838;
+        }
+        .reject-btn {
+            background-color: #dc3545;
+            padding: 5px 10px;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+        .reject-btn:hover {
+            background-color: #c82333;
         }
         .container {
             display: flex;
@@ -85,7 +103,7 @@
         .item-card.calendar_event {
             border-left-color: #28a745;
         }
-        .item-card.todo, .item-card.to_do {
+        .item-card.to_do {
             border-left-color: #ffc107;
         }
         .item-card.web_search {
@@ -102,6 +120,11 @@
         .item-detail {
             font-size: 0.9em;
             color: #666;
+        }
+        .item-actions {
+            margin-top: 5px;
+            display: flex;
+            gap: 5px;
         }
         #error {
             color: red;
@@ -126,7 +149,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -143,6 +165,9 @@
             background-color: white;
             padding: 20px;
             border-radius: 5px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
         .modal-content h3 {
             margin-top: 0;
@@ -187,8 +212,8 @@
     </style>
 </head>
 <body>
-    <h1>Meeting Assistant</h1>
     <div class="container">
+        <h1>Meeting Assistant</h1>
         <div class="controls">
             <button id="startBtn">Start Recording</button>
             <button id="stopBtn" disabled>Stop Recording</button>
@@ -211,7 +236,6 @@
         <div id="error"></div>
     </div>
 
-    <!-- Edit Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <h3>Edit Action Item</h3>
@@ -245,53 +269,53 @@
         let currentEditItem = null;
         let recordedDuration = 0;
 
-        // Request microphone access and start recording
-        startBtn.addEventListener('click', async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                recordedDuration = 0;
-                const startTime = Date.now();
+        // Ensure content is initialized only once
+        document.addEventListener('DOMContentLoaded', () => {
+            startBtn.addEventListener('click', async () => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    recordedDuration = 0;
+                    const startTime = Date.now();
 
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        audioChunks.push(event.data);
-                    }
-                };
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
 
-                mediaRecorder.onstop = async () => {
-                    recordedDuration = (Date.now() - startTime) / 1000; // Duration in seconds
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    audioChunks = [];
-                    await processAudio(audioBlob);
-                    stream.getTracks().forEach(track => track.stop());
-                };
+                    mediaRecorder.onstop = async () => {
+                        recordedDuration = (Date.now() - startTime) / 1000;
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        audioChunks = [];
+                        await processAudio(audioBlob);
+                        stream.getTracks().forEach(track => track.stop());
+                    };
 
-                mediaRecorder.start();
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-                transcriptionStatus.textContent = 'Recording...';
-                transcriptionDiv.textContent = '';
-                actionItemsStatus.textContent = 'Waiting for recording to complete...';
-                actionItemsDiv.textContent = '';
-                errorDiv.textContent = '';
-            } catch (err) {
-                errorDiv.textContent = 'Error accessing microphone: ' + err.message;
-            }
+                    mediaRecorder.start();
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    transcriptionStatus.textContent = 'Recording...';
+                    transcriptionDiv.textContent = '';
+                    actionItemsStatus.textContent = 'Waiting for recording to complete...';
+                    actionItemsDiv.textContent = '';
+                    errorDiv.textContent = '';
+                } catch (err) {
+                    errorDiv.textContent = 'Error accessing microphone: ' + err.message;
+                }
+            });
+
+            stopBtn.addEventListener('click', () => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    startBtn.disabled = false;
+                    stopBtn.disabled = true;
+                    transcriptionStatus.textContent = `Processing audio... (may take ~${Math.ceil(recordedDuration)} seconds for longer recordings)`;
+                    spinner.style.display = 'block';
+                }
+            });
         });
 
-        // Stop recording
-        stopBtn.addEventListener('click', () => {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-                transcriptionStatus.textContent = `Processing audio... (may take ~${Math.ceil(recordedDuration)} seconds for longer recordings)`;
-                spinner.style.display = 'block';
-            }
-        });
-
-        // Process audio: transcribe then extract action items
         async function processAudio(audioBlob) {
             try {
                 const transcription = await transcribeAudio(audioBlob);
@@ -303,7 +327,6 @@
             }
         }
 
-        // Send audio to /transcribe endpoint
         async function transcribeAudio(audioBlob) {
             try {
                 transcriptionStatus.textContent = `Transcribing audio... (may take ~${Math.ceil(recordedDuration)} seconds for longer recordings)`;
@@ -312,7 +335,8 @@
 
                 const response = await fetch('http://localhost:8000/transcribe', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    credentials: 'include'
                 });
 
                 const result = await response.json();
@@ -335,7 +359,6 @@
             }
         }
 
-        // Send transcription to /extract-action-items and fetch JSON files
         async function extractActionItems(transcription) {
             try {
                 actionItemsStatus.textContent = 'Extracting action items...';
@@ -344,6 +367,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({ transcript: transcription })
                 });
 
@@ -366,20 +390,23 @@
             }
         }
 
-        // Fetch JSON files
         async function fetchJsonFiles() {
             try {
                 const jsonResponse = await fetch('http://localhost:8000/get-json-files', {
-                    method: 'GET'
+                    method: 'GET',
+                    credentials: 'include'
                 });
 
                 const jsonResult = await jsonResponse.json();
                 spinner.style.display = 'none';
 
                 if (jsonResponse.ok) {
+                    actionItemsDiv.innerHTML = ''; // Clear existing content to prevent duplication
                     displayActionItems(jsonResult);
-                    const totalItems = jsonResult.emails.length + jsonResult.web_searches.length + jsonResult.notes.length;
-                    actionItemsStatus.textContent = `${totalItems} action items extracted`;
+                    const totalItems = jsonResult.emails.length + jsonResult.web_searches.length + 
+                                      jsonResult.notes.length + jsonResult.todos.length + 
+                                      jsonResult.calendar_events.length;
+                    actionItemsStatus.textContent = `${totalItems} action item${totalItems !== 1 ? 's' : ''} extracted`;
                 } else {
                     actionItemsStatus.textContent = 'Failed to fetch JSON files';
                     actionItemsDiv.textContent = 'Could not fetch JSON files.';
@@ -392,11 +419,9 @@
             }
         }
 
-        // Display action items from JSON files in UI
         function displayActionItems(jsonData) {
-            actionItemsDiv.innerHTML = '';
-            const { emails, web_searches, notes } = jsonData;
-            const totalItems = emails.length + web_searches.length + notes.length;
+            const { emails, web_searches, notes, todos, calendar_events } = jsonData;
+            const totalItems = emails.length + web_searches.length + notes.length + todos.length + calendar_events.length;
 
             if (totalItems === 0) {
                 actionItemsDiv.textContent = 'No action items found in JSON files.';
@@ -417,9 +442,18 @@
                 const itemCard = createItemCard('note', item, index, 'notes');
                 actionItemsDiv.appendChild(itemCard);
             });
+
+            todos.forEach((item, index) => {
+                const itemCard = createItemCard('to_do', item, index, 'todos');
+                actionItemsDiv.appendChild(itemCard);
+            });
+
+            calendar_events.forEach((item, index) => {
+                const itemCard = createItemCard('calendar_event', item, index, 'calendar_events');
+                actionItemsDiv.appendChild(itemCard);
+            });
         }
 
-        // Create item card with edit button
         function createItemCard(type, item, index, fileType) {
             const itemCard = document.createElement('div');
             itemCard.className = `item-card ${type}`;
@@ -431,7 +465,9 @@
             
             const content = document.createElement('div');
             content.className = 'item-content';
-            content.textContent = type === 'email' ? item.body : (type === 'note' ? item.description : item.content);
+            content.textContent = type === 'email' ? item.body : 
+                                 type === 'note' ? item.description : 
+                                 item.content;
             itemCard.appendChild(content);
             
             const details = document.createElement('div');
@@ -461,16 +497,71 @@
                 itemCard.appendChild(details);
             }
             
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'item-actions';
+            
             const editBtn = document.createElement('button');
             editBtn.className = 'edit-btn';
             editBtn.textContent = 'Edit';
             editBtn.onclick = () => openEditModal(type, item, index, fileType);
-            itemCard.appendChild(editBtn);
+            actionsDiv.appendChild(editBtn);
+            
+            const acceptBtn = document.createElement('button');
+            acceptBtn.className = 'accept-btn';
+            acceptBtn.innerHTML = '✔';
+            acceptBtn.onclick = () => handleAction(type, item, index, fileType, 'accept', acceptBtn, editBtn, rejectBtn);
+            actionsDiv.appendChild(acceptBtn);
+            
+            const rejectBtn = document.createElement('button');
+            rejectBtn.className = 'reject-btn';
+            rejectBtn.innerHTML = '✖';
+            rejectBtn.onclick = () => handleAction(type, item, index, fileType, 'reject', rejectBtn, editBtn, acceptBtn);
+            actionsDiv.appendChild(rejectBtn);
+            
+            itemCard.appendChild(actionsDiv);
             
             return itemCard;
         }
 
-        // Open edit modal with form fields
+        async function handleAction(type, item, index, fileType, action, clickedBtn, ...otherBtns) {
+            try {
+                spinner.style.display = 'block';
+                clickedBtn.disabled = true;
+                otherBtns.forEach(btn => btn.disabled = true);
+
+                const payload = { file_type: fileType, index, item };
+                const endpoint = action === 'accept' ? '/accept-action-item' : '/reject-action-item';
+                const url = `http://localhost:8000${endpoint}`; // Replace with deployed Flask URL
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                spinner.style.display = 'none';
+
+                if (response.ok) {
+                    await fetchJsonFiles();
+                    errorDiv.textContent = `Item ${action}ed successfully`;
+                    setTimeout(() => errorDiv.textContent = '', 3000);
+                } else {
+                    errorDiv.textContent = result.error || `Failed to ${action} item`;
+                    clickedBtn.disabled = false;
+                    otherBtns.forEach(btn => btn.disabled = false);
+                }
+            } catch (err) {
+                spinner.style.display = 'none';
+                errorDiv.textContent = `Network error during ${action}: ${err.message}`;
+                clickedBtn.disabled = false;
+                otherBtns.forEach(btn => btn.disabled = false);
+            }
+        }
+
         function openEditModal(type, item, index, fileType) {
             currentEditItem = { type, item, index, fileType };
             editFields.innerHTML = '';
@@ -498,12 +589,21 @@
                     <label for="tag">Tag</label>
                     <input type="text" id="tag" name="tag" value="${item.tag || ''}">
                 `;
+            } else if (type === 'to_do') {
+                editFields.innerHTML = `
+                    <label for="content">Task</label>
+                    <textarea id="content" name="content">${item.content || ''}</textarea>
+                `;
+            } else if (type === 'calendar_event') {
+                editFields.innerHTML = `
+                    <label for="content">Event</label>
+                    <textarea id="content" name="content">${item.content || ''}</textarea>
+                `;
             }
 
             editModal.style.display = 'flex';
         }
 
-        // Save edited item
         saveEditBtn.addEventListener('click', async () => {
             if (!currentEditItem) return;
 
@@ -528,6 +628,16 @@
                     description: document.getElementById('description').value,
                     tag: document.getElementById('tag').value
                 };
+            } else if (type === 'to_do') {
+                updatedItem = {
+                    type: 'to_do',
+                    content: document.getElementById('content').value
+                };
+            } else if (type === 'calendar_event') {
+                updatedItem = {
+                    type: 'calendar_event',
+                    content: document.getElementById('content').value
+                };
             }
 
             try {
@@ -537,6 +647,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         file_type: fileType,
                         index: index,
@@ -561,14 +672,12 @@
             }
         });
 
-        // Cancel edit
         cancelEditBtn.addEventListener('click', () => {
             editModal.style.display = 'none';
             currentEditItem = null;
             editFields.innerHTML = '';
         });
 
-        // Close modal when clicking outside
         editModal.addEventListener('click', (e) => {
             if (e.target === editModal) {
                 editModal.style.display = 'none';

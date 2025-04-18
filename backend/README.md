@@ -200,47 +200,11 @@ All routes are `POST` requests and are prefixed with:
 - **Add a Web Search Result**
   ```json
   {
-    "status": "success",
-    "agent": "web_search",
-    "results": [
-      {
-        "title": "Sample releases new AI tools in 2025",
-        "snippet": "OpenAI has introduced a new model focused on better reasoning..."
-      },
-      {
-        "title": "Mine Google DeepMind 2025 Innovations",
-        "snippet": "Google DeepMind unveiled a new agentic framework..."
-      }
-    ]
+    "title":"Agentic AI",
+    "content":"Content of Agentic AI",
+    "reference_link":"http://localhost:5000"
   }
   ```
-
-- **Update a Web Search Result**
-  ```json
-  {
-    "status": "success",
-    "agent": "web_search",
-    "results": [
-      {
-        "title": "New AI tools by Sample",
-        "snippet": "OpenAI has introduced an improved model..."
-      },
-      {
-        "title": "Google DeepMind's 2025 Framework",
-        "snippet": "DeepMind's new framework promises major advancements..."
-      }
-    ]
-  }
-  ```
-
----
-
-### 🛠 Example Headers
-
-```http
-auth-token: your_jwt_token_here
-Content-Type: application/json
-```
 
 ---
 

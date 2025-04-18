@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'https://meet-sync-backend.vercel.app';
 
 export async function apiRequest(endpoint, method = 'GET', body = null, token = null) {
   const headers = { 'Content-Type': 'application/json' };

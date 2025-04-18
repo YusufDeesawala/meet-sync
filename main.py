@@ -15,9 +15,8 @@ import requests
 load_dotenv()
 
 app = Flask(__name__, template_folder='templates')
-# Configure Flask sessions
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your-secure-secret-key')  # Replace with secure key in production
-app.config['SESSION_TYPE'] = 'filesystem'  # Use filesystem for sessions; consider Redis in production
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your-secure-secret-key')  
+app.config['SESSION_TYPE'] = 'filesystem'  
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 
@@ -26,7 +25,7 @@ CORS(app, resources={
         "origins": ["http://localhost:8080", "http://localhost"],
         "allow_headers": "*",
         "methods": ["GET", "POST", "OPTIONS"],
-        "supports_credentials": True  # Allow cookies/sessions
+        "supports_credentials": True  
     }
 })
 
@@ -61,13 +60,20 @@ else:
     groq_client = Groq(api_key=api_key)
     groq_client = instructor.from_groq(groq_client, mode=instructor.Mode.JSON)
 
-# Backend URLs for accept actions (replace with actual URLs)
 BACKEND_URLS = {
     'email': 'https://meet-sync-backend-2.onrender.com/email',
-    'web_search': 'https://websearch-backend.com/accept-websearch',
+    'web_search': 'https://meet-sync-backend-2.onrender.com/api/websearch/extract',
     'note': 'https://meet-sync-backend.vercel.app/api/notes/addnote',
     'to_do': 'https://todo-backend.com/accept-todo',  # Dummy link
     'calendar_event': 'https://calendar-backend.com/accept-event'  # Dummy link
+}
+
+FILE_TYPE_TO_BACKEND_TYPE = {
+    'emails': 'email',
+    'web_searches': 'web_search',
+    'notes': 'note',
+    'todos': 'to_do',
+    'calendar_events': 'calendar_event'
 }
 
 # Notes auth endpoint
@@ -115,8 +121,7 @@ def convert_action_items(action_items):
             })
         elif item["type"] == "web_search":
             web_searches.append({
-                "type": "web_search",
-                "content": item["content"]
+                "title": item["content"]
             })
         elif item["type"] == "note":
             notes.append({
@@ -429,31 +434,30 @@ def accept_action_item():
             return jsonify({'error': 'Request must contain JSON data'}), 400
 
         data = request.get_json()
-        file_type = data.get('file_type')  # 'emails', 'web_searches', 'notes', 'todos', 'calendar_events'
+        file_type = data.get('file_type')
         index = data.get('index')
         item = data.get('item')
 
         if not file_type or index is None or not isinstance(item, dict):
             return jsonify({'error': 'Missing or invalid file_type, index, or item'}), 400
 
-        if file_type not in ['emails', 'web_searches', 'notes', 'todos', 'calendar_events']:
-            return jsonify({'error': 'Invalid file_type'}), 400
+        backend_type = FILE_TYPE_TO_BACKEND_TYPE.get(file_type)
+        if not backend_type:
+            return jsonify({'error': f'Invalid file_type: {file_type}'}), 400
 
-        # Map file_type to backend_type if needed (adjust this if using multiple URLs)
-        backend_type = file_type.replace('es', '') if file_type in ['emails', 'notes'] else file_type
-        backend_url = 'https://meet-sync-backend-2.onrender.com/email'  # Example; replace dynamically if needed
+        backend_url = BACKEND_URLS.get(backend_type)
+        if not backend_url:
+            return jsonify({'error': f'No backend URL configured for {file_type}'}), 500
 
         headers = {'Content-Type': 'application/json'}
 
-        # Send item as raw dict (not wrapped)
         response = requests.post(backend_url, json=item, headers=headers)
 
         if response.status_code == 200:
             return jsonify({'message': 'Item accepted successfully'}), 200
         else:
             error_msg = response.text or 'Unknown error'
-            # Retry logic for `notes` if needed
-            if file_type == 'notes' and response.status_code == 401:
+            if backend_type == 'note' and response.status_code == 401:
                 auth_token = fetch_notes_auth_token()
                 if auth_token:
                     headers['auth-token'] = f'Bearer {auth_token}'
@@ -465,7 +469,6 @@ def accept_action_item():
 
     except Exception as e:
         return jsonify({'error': f'Error accepting action item: {str(e)}'}), 500
-
 
 @app.route('/')
 def root():

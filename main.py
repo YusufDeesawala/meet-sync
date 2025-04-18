@@ -34,7 +34,7 @@ app.config['UPLOAD_FOLDER'] = 'temp'
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-model = whisper.load_model("tiny")
+model = whisper.load_model("base")
 
 class ActionItem(BaseModel):
     type: str = Field(..., description="Type of action item: note, email, calendar_event, to_do, or web_search")
@@ -62,9 +62,9 @@ else:
 
 BACKEND_URLS = {
     'email': 'https://meet-sync-backend-2.onrender.com/email',
-    'web_search': 'https://meet-sync-backend-2.onrender.com/api/websearch/extract',
+    'web_search': 'https://meet-sync-backend-2.onrender.com/extract',
     'note': 'https://meet-sync-backend.vercel.app/api/notes/addnote',
-    'to_do': 'https://todo-backend.com/accept-todo',  # Dummy link
+    'to_do': 'https://meet-sync-backend.vercel.app/api/todo/addtodo',  
     'calendar_event': 'https://calendar-backend.com/accept-event'  # Dummy link
 }
 
@@ -76,32 +76,7 @@ FILE_TYPE_TO_BACKEND_TYPE = {
     'calendar_events': 'calendar_event'
 }
 
-# Notes auth endpoint
-NOTES_AUTH_URL = 'https://notes-backend.com/auth'  # Replace with actual auth endpoint
-NOTES_AUTH_PAYLOAD = {
-    'client_id': os.getenv('NOTES_CLIENT_ID', 'your-client-id'),
-    'client_secret': os.getenv('NOTES_CLIENT_SECRET', 'your-client-secret'),
-    'grant_type': 'client_credentials'
-}
-
-def fetch_notes_auth_token():
-    """Fetch auth token for notes backend and store in session."""
-    try:
-        response = requests.post(NOTES_AUTH_URL, json=NOTES_AUTH_PAYLOAD)
-        if response.status_code == 200:
-            token = response.json().get('token')
-            if token:
-                session['notes_auth_token'] = token
-                return token
-            else:
-                print(f"Failed to fetch notes auth token: No token in response")
-                return None
-        else:
-            print(f"Failed to fetch notes auth token: {response.text}")
-            return None
-    except Exception as e:
-        print(f"Error fetching notes auth token: {str(e)}")
-        return None
+import json
 
 def convert_action_items(action_items):
     """Convert action items into separate JSON files for emails, web searches, notes, to-dos, and calendar events."""
@@ -112,56 +87,62 @@ def convert_action_items(action_items):
     calendar_events = []
 
     for item in action_items:
-        if item["type"] == "email":
+        item_type = item.get("type")
+
+        if item_type == "email":
             emails.append({
                 "type": "email",
-                "recipient": item["recipient"],
-                "subject": item["subject"],
-                "body": item["content"]
+                "recipient": item.get("recipient", ""),
+                "subject": item.get("subject", ""),
+                "body": item.get("content", "")
             })
-        elif item["type"] == "web_search":
+        elif item_type == "web_search":
             web_searches.append({
-                "title": item["content"]
+                "title": item.get("content", "")
             })
-        elif item["type"] == "note":
+        elif item_type == "note":
             notes.append({
-                "title": item["title"],
-                "description": item["content"],
-                "tag": item["tag"]
+                "title": item.get("title", ""),
+                "description": item.get("content", ""),
+                "tag": item.get("tag", "")
             })
-        elif item["type"] == "to_do":
+        elif item_type == "to_do":
             todos.append({
-                "type": "to_do",
-                "content": item["content"]
+                "title": item.get("title", ""),
+                "description": item.get("content", "")
             })
-        elif item["type"] == "calendar_event":
+        elif item_type == "calendar_event":
             calendar_events.append({
                 "type": "calendar_event",
-                "content": item["content"]
+                "content": item.get("content", "")
             })
+        else:
+            print(f"[WARN] Unknown action type: {item_type}")
 
     try:
         if emails:
             with open("emails.json", "w", encoding="utf-8") as f:
                 json.dump(emails, f, indent=2)
+
         if web_searches:
             with open("web_search.json", "w", encoding="utf-8") as f:
                 json.dump(web_searches, f, indent=2)
+
         if notes:
             with open("notes.json", "w", encoding="utf-8") as f:
                 json.dump(notes, f, indent=2)
+
         if todos:
             with open("todos.json", "w", encoding="utf-8") as f:
                 json.dump(todos, f, indent=2)
+
         if calendar_events:
             with open("calendar_events.json", "w", encoding="utf-8") as f:
                 json.dump(calendar_events, f, indent=2)
-        action_items_file = "action_items.json"
-        if os.path.exists(action_items_file):
-            os.remove(action_items_file)
-        print("Conversion complete. Output saved to JSON files.")
+
     except Exception as e:
-        print(f"Failed to save converted JSON files: {e}")
+        print(f"[ERROR] Failed to write JSON files: {str(e)}")
+
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
@@ -226,37 +207,43 @@ def extract_action_items():
             messages=[
                 {
                     "role": "system",
-                    "content": '''You are a smart meeting assistant. Given the transcript below, extract and classify actionable items by type.
+                    "content": '''
+                                You are a smart meeting assistant. Given the transcript below, extract and classify actionable items by type.
 
-                                    Supported action item types:
-                                    - note
-                                    - email
-                                    - calendar_event
-                                    - to_do
-                                    - web_search
+                                Supported action item types:
+                                - note
+                                - email
+                                - calendar_event
+                                - to_do
+                                - web_search
 
-                                    Use the following JSON format for each action item:
+                                Use the following JSON format for each action item:
 
-                                    {
-                                    "type": "<type>",
-                                    "content": "<main description of the action item>",
+                                {
+                                "type": "<type>",
+                                "content": "<main description of the action item>",
 
-                                    # Required for type 'email'
-                                    "recipient": "<recipient email>",
-                                    "subject": "<email subject>",
-                                    "body": "<full email body>",
+                                # Required for type 'email'
+                                "recipient": "<recipient email>",
+                                "subject": "<email subject>",
+                                "body": "<full email body>",
 
-                                    # Required for type 'note'
-                                    "title": "<short title>",
-                                    "tag": "<tag or category for the note>"
-                                    }
+                                # Required for type 'note'
+                                "title": "<short title>",
+                                "tag": "<tag or category for the note>",
 
-                                    Notes:
-                                    - For action items of type **note**, include `title`, `tag`, and `content` (used as the note description).
-                                    - For type **email**, always include `recipient`, `subject`, and `body`.
-                                    - For **all other types**, only include `type` and `content`. Do not include any extra fields like `recipient`, `title`, or `tag`.
+                                # Recommended for type 'to_do'
+                                "title": "<short to-do title>"
+                                }
 
-                                    Respond with a JSON array of action items.'''
+                                Notes:
+                                - For action items of type **note**, include `title`, `tag`, and `content` (used as the note description).
+                                - For type **email**, always include `recipient`, `subject`, and `body`.
+                                - For type **to_do**, include a short `title` and a longer `content` (used as the task description).
+                                - For type **calendar_event** or **web_search**, only include `type` and `content`.
+                                - Respond with a JSON array of action items only.
+                                '''
+
                 },
                 {
                     "role": "user",
@@ -449,7 +436,7 @@ def accept_action_item():
         if not backend_url:
             return jsonify({'error': f'No backend URL configured for {file_type}'}), 500
 
-        headers = {'Content-Type': 'application/json'}
+        headers = {'Content-Type': 'application/json', 'auth-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjdmZmU1MjJmYWMzYWVhODEyN2NmODAzIn0sImlhdCI6MTc0NDg4MjI4Mn0.Xr6SBr2YzPjiFq9KDnu2UxEiU4utnO4sZEdfDYe83hw'}
 
         response = requests.post(backend_url, json=item, headers=headers)
 
@@ -458,9 +445,9 @@ def accept_action_item():
         else:
             error_msg = response.text or 'Unknown error'
             if backend_type == 'note' and response.status_code == 401:
-                auth_token = fetch_notes_auth_token()
+                auth_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjdmZmU1MjJmYWMzYWVhODEyN2NmODAzIn0sImlhdCI6MTc0NDg4MjI4Mn0.Xr6SBr2YzPjiFq9KDnu2UxEiU4utnO4sZEdfDYe83hw'
                 if auth_token:
-                    headers['auth-token'] = f'Bearer {auth_token}'
+                    headers['auth-token'] = f'{auth_token}'
                     retry_response = requests.post(backend_url, json=item, headers=headers)
                     if retry_response.status_code == 200:
                         return jsonify({'message': 'Item accepted successfully'}), 200

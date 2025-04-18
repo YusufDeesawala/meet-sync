@@ -97,9 +97,6 @@ def handle_email():
     if not isinstance(item, dict) or len(item) == 0:
         return jsonify({"error": "Request body should be an email object"}), 400
 
-    # Check if the required fields are present and the type is 'email'
-    if not all(k in item for k in ('type', 'recipient', 'subject', 'body')) or item['type'] != 'email':
-        return jsonify({"error": "Invalid email object format"}), 400
 
     try:
         msg = EmailMessage()

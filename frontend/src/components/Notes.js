@@ -1,59 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import noteContext from '../context/noteContext';
 
 function Notes() {
-  const [notes, setNotes] = useState([]);
+  const { notes, getNotes, editNote, deleteNote } = useContext(noteContext);
   const [selectedNote, setSelectedNote] = useState(null);
   const [search, setSearch] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editForm, setEditForm] = useState({ title: '', description: '', tag: '' });
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [filter, setFilter] = useState('all'); // 'all' or specific tag
-  const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'a-z', 'z-a'
+  const [filter, setFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
   const [tags, setTags] = useState([]);
   const navigate = useNavigate();
 
-  const fetchNotes = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+        await getNotes();
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching notes:", error);
       }
-      
-      const res = await fetch('http://localhost:5000/api/notes/fetchnotes', {
-        headers: { 'auth-token': token }
-      });
-
-      if (res.status === 401) {
-        // Token expired or invalid
-        localStorage.removeItem('token');
-        navigate('/login');
-        return;
-      }
-
-      const data = await res.json();
-      setNotes(data);
-      
-      // Extract unique tags for filter dropdown
-      const uniqueTags = Array.from(new Set(data.map(note => note.tag)));
-      setTags(uniqueTags);
-    } catch (error) {
-      console.error("Error fetching notes:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    fetchData();
+  }, [getNotes, navigate]);
 
   useEffect(() => {
-    fetchNotes();
-  }, [navigate]);
+    const uniqueTags = Array.from(new Set(notes.map(note => note.tag)));
+    setTags(uniqueTags);
+  }, [notes]);
 
-  const handleEdit = note => {
+  const handleEdit = (note) => {
     setSelectedNote(note);
     setEditForm({
       title: note.title,
@@ -63,76 +49,35 @@ function Notes() {
     setIsEditing(true);
   };
 
-  const handleUpdateNote = async e => {
+  const handleUpdateNote = async (e) => {
     e.preventDefault();
-    
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/notes/updatenote/${selectedNote._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'auth-token': token
-        },
-        body: JSON.stringify(editForm)
-      });
-
-      if (res.status === 200) {
-        const updatedNotes = notes.map(note => 
-          note._id === selectedNote._id ? {...note, ...editForm} : note
-        );
-        setNotes(updatedNotes);
-        setIsEditing(false);
-        setSelectedNote(null);
-      }
-    } catch (error) {
-      console.error("Error updating note:", error);
-    }
+    await editNote(selectedNote._id, editForm.title, editForm.description, editForm.tag);
+    setIsEditing(false);
+    setSelectedNote(null);
   };
 
   const handleDeleteNote = async (noteId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/notes/deletenote/${noteId}`, {
-        method: 'DELETE',
-        headers: {
-          'auth-token': token
-        }
-      });
-
-      if (res.status === 200) {
-        setNotes(notes.filter(note => note._id !== noteId));
-        setDeleteConfirm(null);
-      }
-    } catch (error) {
-      console.error("Error deleting note:", error);
-    }
+    await deleteNote(noteId);
+    setDeleteConfirm(null);
   };
 
   const handleEditFormChange = e => {
-    setEditForm({
-      ...editForm,
-      [e.target.name]: e.target.value
-    });
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
-  // Sort and filter notes
   let filtered = notes;
-  
-  // Apply tag filter
+
   if (filter !== 'all') {
     filtered = filtered.filter(note => note.tag === filter);
   }
-  
-  // Apply search
+
   if (search) {
     filtered = filtered.filter(note =>
       note.title.toLowerCase().includes(search.toLowerCase()) ||
       note.description.toLowerCase().includes(search.toLowerCase())
     );
   }
-  
-  // Apply sorting
+
   switch (sortBy) {
     case 'newest':
       filtered = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -152,11 +97,9 @@ function Notes() {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
-        staggerChildren: 0.1
-      }
+      transition: { staggerChildren: 0.1 }
     }
   };
 
@@ -164,7 +107,6 @@ function Notes() {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
-
   return (
     <div className="notes-container">
       <div className="notes-header">
@@ -177,10 +119,10 @@ function Notes() {
             onChange={e => setSearch(e.target.value)}
             className="search-input"
           />
-          
+
           <div className="view-controls">
-            <select 
-              value={filter} 
+            <select
+              value={filter}
               onChange={e => setFilter(e.target.value)}
               className="filter-select"
             >
@@ -189,9 +131,9 @@ function Notes() {
                 <option key={tag} value={tag}>{tag}</option>
               ))}
             </select>
-            
-            <select 
-              value={sortBy} 
+
+            <select
+              value={sortBy}
               onChange={e => setSortBy(e.target.value)}
               className="sort-select"
             >
@@ -200,19 +142,20 @@ function Notes() {
               <option value="a-z">A-Z</option>
               <option value="z-a">Z-A</option>
             </select>
-            
-            <button 
+
+            <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
               onClick={() => setViewMode('grid')}
             >
               <span role="img" aria-label="Grid View">📱</span>
             </button>
-            <button 
+            <button
               className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
               onClick={() => setViewMode('list')}
             >
-              <span role="img" aria-label="List View">📋</span>
+              <span role="img" aria-label="Todo Page">📋</span>
             </button>
+
           </div>
         </div>
       </div>
@@ -223,7 +166,7 @@ function Notes() {
           <p>Loading your notes...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <motion.div 
+        <motion.div
           className="empty-state"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -232,7 +175,7 @@ function Notes() {
           <h3>No notes found</h3>
           <p>{search || filter !== 'all' ? 'Try changing your search or filter' : 'Create your first note to get started'}</p>
           {!search && filter === 'all' && (
-            <motion.button 
+            <motion.button
               className="add-note-btn"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -243,15 +186,15 @@ function Notes() {
           )}
         </motion.div>
       ) : (
-        <motion.div 
+        <motion.div
           className={viewMode === 'grid' ? 'notes-grid' : 'notes-list'}
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {filtered.map(note => (
-            <motion.div 
-              key={note._id} 
+            <motion.div
+              key={note._id}
               className={viewMode === 'grid' ? 'note-card' : 'note-list-item'}
               variants={noteVariants}
               whileHover={{ scale: 1.02 }}
@@ -270,9 +213,9 @@ function Notes() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="note-actions" onClick={e => e.stopPropagation()}>
-                <motion.button 
+                <motion.button
                   className="edit-btn"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -283,7 +226,7 @@ function Notes() {
                 >
                   ✏️
                 </motion.button>
-                <motion.button 
+                <motion.button
                   className="delete-btn"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -303,14 +246,14 @@ function Notes() {
       {/* View Note Modal */}
       <AnimatePresence>
         {selectedNote && !isEditing && (
-          <motion.div 
+          <motion.div
             className="modal-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedNote(null)}
           >
-            <motion.div 
+            <motion.div
               className="modal-window"
               layoutId={`note-${selectedNote._id}`}
               onClick={e => e.stopPropagation()}
@@ -318,7 +261,7 @@ function Notes() {
               <div className="modal-header">
                 <h2>{selectedNote.title}</h2>
                 <div className="modal-actions">
-                  <motion.button 
+                  <motion.button
                     className="edit-modal-btn"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -333,7 +276,7 @@ function Notes() {
                   >
                     Edit
                   </motion.button>
-                  <motion.button 
+                  <motion.button
                     className="close-modal-btn"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -343,7 +286,7 @@ function Notes() {
                   </motion.button>
                 </div>
               </div>
-              
+
               <div className="note-full-content">
                 <p className="note-description">{selectedNote.description}</p>
                 <div className="note-meta">
@@ -361,13 +304,13 @@ function Notes() {
       {/* Edit Note Modal */}
       <AnimatePresence>
         {isEditing && (
-          <motion.div 
+          <motion.div
             className="modal-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div 
+            <motion.div
               className="modal-window edit-modal"
               initial={{ y: 20 }}
               animate={{ y: 0 }}
@@ -386,7 +329,7 @@ function Notes() {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="description">Content</label>
                   <textarea
@@ -397,7 +340,7 @@ function Notes() {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="tag">Tag</label>
                   <input
@@ -407,9 +350,9 @@ function Notes() {
                     onChange={handleEditFormChange}
                   />
                 </div>
-                
+
                 <div className="modal-actions">
-                  <motion.button 
+                  <motion.button
                     type="submit"
                     className="save-btn"
                     whileHover={{ scale: 1.05 }}
@@ -417,7 +360,7 @@ function Notes() {
                   >
                     Save Changes
                   </motion.button>
-                  <motion.button 
+                  <motion.button
                     type="button"
                     className="cancel-btn"
                     whileHover={{ scale: 1.05 }}
@@ -439,13 +382,13 @@ function Notes() {
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {deleteConfirm && (
-          <motion.div 
+          <motion.div
             className="modal-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div 
+            <motion.div
               className="modal-window delete-modal"
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
@@ -453,9 +396,9 @@ function Notes() {
             >
               <h3>Delete Note</h3>
               <p>Are you sure you want to delete this note? This action cannot be undone.</p>
-              
+
               <div className="modal-actions">
-                <motion.button 
+                <motion.button
                   className="delete-confirm-btn"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -463,7 +406,7 @@ function Notes() {
                 >
                   Delete
                 </motion.button>
-                <motion.button 
+                <motion.button
                   className="cancel-btn"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

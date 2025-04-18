@@ -1,17 +1,27 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import noteContext from '../context/noteContext';
+import todoContext from '../context/todoContext';
 
-function AddNote() {
-  const context= useContext(noteContext);
-  const {addNote}=context;
-  const [form, setForm] = useState({ title: '', description: '', tag: 'General' });
+function AddTodo() {
+  const context = useContext(todoContext);
+  const { addTodo } = context;
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    isCompleted: false
+  });
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    const { name, value, type, checked } = e.target;
+    setForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -24,21 +34,19 @@ function AddNote() {
         return;
       }
 
-      await addNote(form.title, form.description, form.tag); // call context function
+      await addTodo(form.title, form.description, form.isCompleted);
 
-      setStatus({ message: 'Note added successfully!', type: 'success' });
-      setForm({ title: '', description: '', tag: 'General' });
+      setStatus({ message: 'Todo added successfully!', type: 'success' });
+      setForm({ title: '', description: '', isCompleted: false });
 
-      setTimeout(() => navigate('/notes'), 1500);
+      setTimeout(() => navigate('/todo'), 1500);
     } catch (error) {
-      console.error("Error adding note:", error);
-      setStatus({ message: 'Failed to add note.', type: 'error' });
+      console.error("Error adding todo:", error);
+      setStatus({ message: 'Failed to add todo.', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
-
-  const commonTags = ['General', 'Work', 'Personal', 'Ideas', 'To-Do', 'Important'];
 
   return (
     <motion.div
@@ -53,7 +61,7 @@ function AddNote() {
         animate={{ y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
       >
-        <h2>Create New Note</h2>
+        <h2>Create New Todo</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="title">Title</label>
@@ -61,7 +69,7 @@ function AddNote() {
               id="title"
               name="title"
               type="text"
-              placeholder="Enter note title"
+              placeholder="Enter todo title"
               value={form.title}
               onChange={handleChange}
               required
@@ -69,11 +77,11 @@ function AddNote() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Content</label>
+            <label htmlFor="description">Description</label>
             <textarea
               id="description"
               name="description"
-              placeholder="Write your note here..."
+              placeholder="Write your task details..."
               value={form.description}
               onChange={handleChange}
               required
@@ -81,24 +89,17 @@ function AddNote() {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="tag">Tag</label>
-            <div className="tag-selection">
+          <div className="form-group checkbox-group">
+            <label htmlFor="isCompleted">
               <input
-                id="tag"
-                name="tag"
-                type="text"
-                placeholder="Add a tag (e.g. Work, Personal)"
-                value={form.tag}
+                id="isCompleted"
+                name="isCompleted"
+                type="checkbox"
+                checked={form.isCompleted}
                 onChange={handleChange}
-                list="common-tags"
               />
-              <datalist id="common-tags">
-                {commonTags.map(tag => (
-                  <option key={tag} value={tag} />
-                ))}
-              </datalist>
-            </div>
+              Mark as Completed
+            </label>
           </div>
 
           {status.message && (
@@ -115,12 +116,12 @@ function AddNote() {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
             >
-              {loading ? 'Saving...' : 'Save Note'}
+              {loading ? 'Saving...' : 'Save Todo'}
             </motion.button>
             <motion.button
               type="button"
               className="cancel-btn"
-              onClick={() => navigate('/notes')}
+              onClick={() => navigate('/todo')}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -133,4 +134,4 @@ function AddNote() {
   );
 }
 
-export default AddNote;
+export default AddTodo;

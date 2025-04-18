@@ -11,6 +11,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
+
 # Get email credentials from environment variables
 EMAIL_SENDER = os.getenv("EMAIL_SENDER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
@@ -74,7 +75,7 @@ def extract_data():
     print(f"Sending data to web_add: {result_data}")
 
     # Send the result data to the web_add endpoint
-    web_add_url = 'http://localhost:5000/api/websearch/web_add'
+    web_add_url = 'https://meet-sync-backend.vercel.app/api/websearch/web_add'
     headers = {
         'Content-Type': 'application/json',
         'auth-token': auth_token  # Include the auth-token in the request headers

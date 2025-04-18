@@ -10,7 +10,7 @@ const WebSearchState = (props) => {
     const token = localStorage.getItem("token");
     if (!token) return;
     
-    const data = await apiRequest("/web_fetch", "GET", null, token);
+    const data = await apiRequest("/api/websearch/web_fetch", "GET", null, token);
     setWebSearches(data);
   };
 
@@ -19,7 +19,7 @@ const WebSearchState = (props) => {
     const token = localStorage.getItem("token");
     if (!token) return;
     
-    const newWebSearch = await apiRequest("/web_add", "POST", {
+    const newWebSearch = await apiRequest("/api/websearch/web_add", "POST", {
       title,
       content,
       reference_link
@@ -32,7 +32,7 @@ const WebSearchState = (props) => {
     const token = localStorage.getItem("token");
     if (!token) return;
     
-    await apiRequest(`/web_delete/${id}`, "DELETE", null, token);
+    await apiRequest(`/api/websearch/web_delete/${id}`, "DELETE", null, token);
     setWebSearches((prev) => prev.filter((webSearch) => webSearch._id !== id));
   };
 
@@ -41,7 +41,7 @@ const WebSearchState = (props) => {
     const token = localStorage.getItem("token");
     if (!token) return;
     
-    await apiRequest(`/web_update/${id}`, "PUT", {
+    await apiRequest(`/api/websearch/web_update/${id}`, "PUT", {
       title,
       content,
       reference_link

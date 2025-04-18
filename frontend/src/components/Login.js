@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import {} from '../utils/api'
 
 function Login({ setIsAuthenticated }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const BASE_URL = 'http://localhost:5000';
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -18,7 +21,7 @@ function Login({ setIsAuthenticated }) {
     setLoading(true);
     
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)

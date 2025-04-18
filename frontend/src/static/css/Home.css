@@ -1,0 +1,88 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow-y: hidden;
+    height: 100%;
+}
+
+.home-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 70px);
+    position: relative;
+    overflow-y: hidden;
+    padding: 2rem;
+}
+
+.card-grid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+}
+
+.card {
+    width: 150px;
+    height: 150px;
+    background: #f7f7f7;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+    text-align: center;
+}
+
+.card-icon {
+    margin-bottom: 1.25rem;
+    font-size: 2.5rem;
+}
+
+.card-label {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+  .floating.doodle {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    opacity: 0.2;
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: 1;
+  }
+  .doodle-1 { top: 5%;  left: 10%; background-image:url('../svg/pen.svg');; animation: float-1 6s ease-in-out infinite; }
+  .doodle-2 { top: 60%; left: 90%; background-image: url('../svg/star.svg'); animation: float-2 7s ease-in-out infinite; }
+  .doodle-3 { top: 30%; left: 30%; background-image: url('../svg/triangle.svg'); animation: float-3 5s ease-in-out infinite; }
+  .doodle-4 { top: 25%; left: 75%; background-image:url('../svg/pen.svg');; animation: float-4 6s ease-in-out infinite; }
+  .doodle-5 { top: 50%; left: 30%; background-image: url('../svg/star.svg'); animation: float-5 7s ease-in-out infinite; }
+  .doodle-6 { top: 70%; left: 20%; background-image: url('../svg/triangle.svg'); animation: float-6 5s ease-in-out infinite; }
+  .doodle-7 { top: 15%; left: 50%; background-image: url('../svg/pen.svg'); animation: float-1 8s ease-in-out infinite; }
+  .doodle-8 { top: 80%; left: 10%; background-image: url('../svg/star.svg'); animation: float-2 6s ease-in-out infinite; }
+  .doodle-9 { top: 5%; left: 70%; background-image: url('../svg/triangle.svg'); animation: float-3 7s ease-in-out infinite; }
+  .doodle-10 { top: 60%; left: 60%; background-image: url('../svg/pen.svg'); animation: float-4 9s ease-in-out infinite; }
+  .doodle-11 { top: 35%; left: 5%; background-image: url('../svg/star.svg'); animation: float-5 10s ease-in-out infinite; }
+  .doodle-12 { top: 75%; left: 85%; background-image: url('../svg/triangle.svg'); animation: float-6 8s ease-in-out infinite; }
+  @keyframes float-1 { 0%,100%{transform:translateY(0)}50%{transform:translateY(15px)} }
+  @keyframes float-2 { 0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)} }
+  @keyframes float-3 { 0%,100%{transform:translateY(0)}50%{transform:translateY(10px)} }
+  @keyframes float-4 { 0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)} }
+  @keyframes float-5 { 0%,100%{transform:translateY(0)}50%{transform:translateY(25px)} }
+  @keyframes float-6 { 0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)} }
+  
+  /* Optional: Adjust for responsive view */
+  @media (max-width: 600px) {
+    .card-grid {
+      flex-wrap: wrap;
+    }
+  }
+  @media (max-width: 500px) {
+    .doodle-4, .doodle-5, .doodle-6 {
+      display: none;
+    }
+  }

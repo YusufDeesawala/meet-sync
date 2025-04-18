@@ -9,6 +9,9 @@ function Register({ setIsAuthenticated }) {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const BASE_URL = 'http://localhost:5000';
+
+
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError('');
@@ -33,7 +36,7 @@ function Register({ setIsAuthenticated }) {
     
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch(`${BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

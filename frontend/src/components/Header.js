@@ -4,19 +4,22 @@ import { motion } from 'framer-motion';
 
 function Header({ isAuthenticated, onLogout }) {
   const location = useLocation();
-  
+
   return (
     <header className="app-header">
       <div className="header-content">
-        <motion.h1 
-          className="app-title"
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <span className="logo">📝</span> NotePad
-        </motion.h1>
-        
+        <Link to="/home" className={location.pathname === "/home" ? "active" : ""}>
+          <motion.h1
+            className="app-title"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="logo">📝</span> NotePad
+          </motion.h1>
+        </Link>
+
+
         {isAuthenticated ? (
           <nav className="nav-menu">
             <Link to="/notes" className={location.pathname === "/notes" ? "active" : ""}>
@@ -29,20 +32,20 @@ function Header({ isAuthenticated, onLogout }) {
                 Add Note
               </motion.div>
             </Link>
-            <Link to="/todo" className={location.pathname === "/notes" ? "active" : ""}>
+            <Link to="/todo" className={location.pathname === "/todo" ? "active" : ""}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 My Todos
               </motion.div>
             </Link>
-            <Link to="/addtodo" className={location.pathname === "/addnote" ? "active" : ""}>
+            <Link to="/addtodo" className={location.pathname === "/addtodo" ? "active" : ""}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 Add Todo
               </motion.div>
             </Link>
-            <motion.button 
+            <motion.button
               className="logout-btn"
               onClick={onLogout}
-              whileHover={{ scale: 1.05 }} 
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               Logout

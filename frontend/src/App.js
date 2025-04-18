@@ -11,6 +11,7 @@ import TodoState from './context/TodoState';
 import './App.css';
 import Todo from './components/Todo';
 import AddTodo from './components/AddTodo';
+import Home from './components/Home';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -43,7 +44,7 @@ function App() {
                 <Routes>
                   <Route
                     path="/"
-                    element={isAuthenticated ? <Navigate to="/notes" /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <Navigate to="/home" /> : <Navigate to="/login" />}
                   />
                   <Route
                     path="/register"
@@ -51,7 +52,7 @@ function App() {
                       !isAuthenticated ? (
                         <Register setIsAuthenticated={setIsAuthenticated} />
                       ) : (
-                        <Navigate to="/notes" />
+                        <Navigate to="/home" />
                       )
                     }
                   />
@@ -61,7 +62,7 @@ function App() {
                       !isAuthenticated ? (
                         <Login setIsAuthenticated={setIsAuthenticated} />
                       ) : (
-                        <Navigate to="/notes" />
+                        <Navigate to="/home" />
                       )
                     }
                   />
@@ -72,6 +73,10 @@ function App() {
                   <Route
                     path="/notes"
                     element={isAuthenticated ? <Notes /> : <Navigate to="/login" />}
+                  />
+                   <Route
+                    path="/home"
+                    element={isAuthenticated ? <Home /> : <Navigate to="/login" />}
                   />
                   <Route path='/addtodo' element={isAuthenticated? <AddTodo/>:<Navigate to={"/login"}/>}/>
                   <Route path='/todo' element={isAuthenticated ? <Todo/>: <Navigate to="/login"/>}/>

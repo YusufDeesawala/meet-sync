@@ -90,34 +90,34 @@ def extract_data():
 
 @app.route('/email', methods=['POST'])
 def handle_email():
-    # Get the input data for the email
-    items = request.get_json()
+    # Get the input data for the email (expecting a single object)
+    item = request.get_json()
 
-    if not isinstance(items, list) or len(items) == 0:
-        return jsonify({"error": "Request body should be a list of email objects"}), 400
+    # Ensure the input is a dictionary and not empty
+    if not isinstance(item, dict) or len(item) == 0:
+        return jsonify({"error": "Request body should be an email object"}), 400
 
-    for item in items:
-        # Check if the required fields are present
-        if not all(k in item for k in ('type', 'recipient', 'subject', 'body')) or item['type'] != 'email':
-            return jsonify({"error": "Invalid email object format"}), 400
+    # Check if the required fields are present and the type is 'email'
+    if not all(k in item for k in ('type', 'recipient', 'subject', 'body')) or item['type'] != 'email':
+        return jsonify({"error": "Invalid email object format"}), 400
 
-        try:
-            msg = EmailMessage()
-            msg['Subject'] = item['subject']
-            msg['From'] = EMAIL_SENDER
-            msg['To'] = item['recipient']
-            msg.set_content(item['body'])
+    try:
+        msg = EmailMessage()
+        msg['Subject'] = item['subject']
+        msg['From'] = EMAIL_SENDER
+        msg['To'] = item['recipient']
+        msg.set_content(item['body'])
 
-            # Use Gmail SMTP server to send the email
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-                smtp.login(EMAIL_SENDER, EMAIL_PASSWORD)
-                smtp.send_message(msg)
-            
-            # Respond with success
-            return jsonify({"status": "success", "agent": "email", "message": "Email sent"}), 200
+        # Use Gmail SMTP server to send the email
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        
+        # Respond with success
+        return jsonify({"status": "success", "agent": "email", "message": "Email sent"}), 200
 
-        except Exception as e:
-            return jsonify({"status": "error", "agent": "email", "message": str(e)}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "agent": "email", "message": str(e)}), 500
 
 
 if __name__ == '__main__':

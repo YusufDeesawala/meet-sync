@@ -29,6 +29,16 @@ function Header({ isAuthenticated, onLogout }) {
                 Add Note
               </motion.div>
             </Link>
+            <Link to="/todo" className={location.pathname === "/notes" ? "active" : ""}>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                My Todos
+              </motion.div>
+            </Link>
+            <Link to="/addtodo" className={location.pathname === "/addnote" ? "active" : ""}>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                Add Todo
+              </motion.div>
+            </Link>
             <motion.button 
               className="logout-btn"
               onClick={onLogout}

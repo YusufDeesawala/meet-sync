@@ -7,10 +7,9 @@ const express= require('express')
 const cors= require('cors')
 connectToMongo();
 const app= express()
-const port=process.env.PORT;
+const port="5000";
 app.use(cors())
 app.use(express.json())
-
 //Available Routes...
 app.use('/api/auth', require('./routes/auth')) //We will use app.use to connect routes.
 app.use('/api/notes', require('./routes/notes')) //We will use app.use to connect routes.

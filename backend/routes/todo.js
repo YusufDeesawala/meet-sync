@@ -49,10 +49,6 @@ router.put('/updatetodo/:id', fetchuser,async(req,res)=>{
         if(todo.user.toString()!==req.user.id){
             res.status(401).send("Unauthorized")
         }
-        if (isCompleted === true) {
-            await Todo.findByIdAndDelete(req.params.id);
-            return res.json({ success: "Todo marked completed and deleted" });
-          }
         todo= await Todo.findByIdAndUpdate(req.params.id, {$set: newTodo}, {new:true})
         res.json(todo)
     } catch (error) {

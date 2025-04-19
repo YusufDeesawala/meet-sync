@@ -18,7 +18,6 @@ app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 BASE_URL = os.getenv('BASE_URL')
 
-
 CORS(app, resources={
     r"/*": {
         "origins": ["http://localhost:8080", "http://localhost"],

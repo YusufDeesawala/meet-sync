@@ -7,6 +7,7 @@
     <title>AI Meeting Assistant</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="../static/meeting.ico">
     <style>
         :root {
             --primary: #4f46e5;
@@ -1057,6 +1058,8 @@
                     const formData = new FormData();
                     formData.append('file', audioBlob, 'recording.webm');
 
+                //Replace this below if your are using it for the production = "http://localhost:8000/transcribe"
+                //Replace this below if you are using it for the deployement = `${APP_URL}/transcribe`
                     const response = await fetch(`${APP_URL}/transcribe`, {
                         method: 'POST',
                         body: formData,
@@ -1098,6 +1101,8 @@
                     updateStatus(actionItemsStatus, 'Extracting action items...', 'fa-cog fa-spin', '#f59e0b');
                     showLoader('Analyzing transcription and extracting action items...');
 
+                //Replace this below if your are using it for the production = "http://localhost:8000/extract-action-items'"
+                //Replace this below if you are using it for the deployement = `${APP_URL}/extract-action-items`                    
                     const extractResponse = await fetch(`${APP_URL}/extract-action-items`, {
                         method: 'POST',
                         headers: {
@@ -1128,6 +1133,8 @@
             // Fetch JSON files with action items
             async function fetchJsonFiles() {
                 try {
+                //Replace this below if your are using it for the production = "http://localhost:8000/get-json-files"
+                //Replace this below if you are using it for the deployement = `${APP_URL}/get-json-files`
                     const jsonResponse = await fetch(`${APP_URL}/get-json-files`, {
                         method: 'GET',
                         credentials: 'include'
@@ -1331,6 +1338,9 @@
 
                     const payload = { file_type: fileType, index, item };
                     const endpoint = action === 'accept' ? '/accept-action-item' : '/reject-action-item';
+
+                //Replace this below if your are using it for the production = "http://localhost:8000${endpoint}"
+                //Replace this below if you are using it for the deployement = `${APP_URL}${endpoint}`
                     const url = `${APP_URL}${endpoint}`;
 
                     const response = await fetch(url, {
@@ -1467,7 +1477,8 @@
 
                 try {
                     showLoader('Updating action item...');
-
+                //Replace this below if your are using it for the production = "http://localhost:8000/update-json-file"
+                //Replace this below if you are using it for the deployement = `${APP_URL}/update-json-file`
                     const response = await fetch(`${APP_URL}/update-json-file`, {
                         method: 'POST',
                         headers: {

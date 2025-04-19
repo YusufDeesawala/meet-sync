@@ -446,9 +446,9 @@ def login():
         if res.status_code == 200:
             token = res.json().get("authToken")
             session['token'] = token
-            flash("Login successful!", "success")
+            #flash("Login successful!", "success")
             # Pass token to template for localStorage storage
-            return render_template('login.html', token=token)
+            return render_template('index.html', token=token)
         flash("Login failed!", "danger")
     return render_template('login.html')
 

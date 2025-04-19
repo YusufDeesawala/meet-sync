@@ -90,7 +90,7 @@ def convert_action_items(action_items):
         elif item_type == "web_search":
             web_searches.append({
                 "title": item.get("content", "")
-            })
+            })  
         elif item_type == "note":
             notes.append({
                 "title": item.get("title", ""),
@@ -401,7 +401,25 @@ def accept_action_item():
         response = requests.post(backend_url, json=item, headers=headers)
         
         if response.status_code == 200:
-            return jsonify({'message': 'Item accepted successfully'}), 200
+            file_map = {
+                'emails': 'emails.json',
+                'web_searches': 'web_search.json',
+                'notes': 'notes.json',
+                'todos': 'todos.json',
+                'calendar_events': 'calendar_events.json'
+            }
+            file_path = file_map.get(file_type)
+            if file_path and os.path.exists(file_path):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        items = json.load(f)
+                    if 0 <= index < len(items):
+                        items.pop(index)
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            json.dump(items, f, indent=2)
+                except Exception as e:
+                    print(f"[ERROR] Failed to delete item from {file_path}: {str(e)}")
+            return jsonify({'message': 'Item accepted and removed successfully'}), 200
         else:
             error_msg = response.text or 'Unknown error'
             return jsonify({'error': f'Failed to accept item: {error_msg}'}), response.status_code
@@ -428,9 +446,9 @@ def login():
         if res.status_code == 200:
             token = res.json().get("authToken")
             session['token'] = token
-            flash("Login successful!", "success")
+            #flash("Login successful!", "success")
             # Pass token to template for localStorage storage
-            return render_template('login.html', token=token)
+            return render_template('index.html', token=token)
         flash("Login failed!", "danger")
     return render_template('login.html')
 

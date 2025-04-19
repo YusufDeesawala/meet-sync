@@ -10,7 +10,6 @@ function AddNote() {
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async e => {

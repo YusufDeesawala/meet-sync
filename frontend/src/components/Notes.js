@@ -2,6 +2,7 @@ import React, { useEffect, useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import noteContext from '../context/noteContext';
+import { NotebookPenIcon} from 'lucide-react';
 
 function Notes() {
   const { notes, getNotes, editNote, deleteNote } = useContext(noteContext);
@@ -146,14 +147,23 @@ function Notes() {
             <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
               onClick={() => setViewMode('grid')}
+              title='Grid View'
             >
               <span role="img" aria-label="Grid View">📱</span>
             </button>
             <button
               className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
               onClick={() => setViewMode('list')}
+              title='List View'
             >
               <span role="img" aria-label="Todo Page">📋</span>
+            </button>
+            <button
+              className="view-btn"
+              onClick={() => navigate('/addnote')}
+              title="Add Note"
+            >
+             <NotebookPenIcon size={20}/>
             </button>
 
           </div>

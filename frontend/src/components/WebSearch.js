@@ -2,6 +2,7 @@ import React, { useEffect, useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import webSearchContext from '../context/webSearchContext';
+import { FilePlus2 } from 'lucide-react';
 
 function WebSearch() {
   const { webSearches, getWebSearches, editWebSearch, deleteWebSearch } = useContext(webSearchContext);
@@ -52,7 +53,7 @@ function WebSearch() {
   const handleUpdateWebSearch = async (e) => {
     e.preventDefault();
     await editWebSearch(
-      selectedWebSearch._id, 
+      selectedWebSearch._id,
       editForm.title,
       editForm.content,
       editForm.reference_link
@@ -148,19 +149,28 @@ function WebSearch() {
             <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
               onClick={() => setViewMode('grid')}
+              title='Grid View'
             >
               <span role="img" aria-label="Grid View">📱</span>
             </button>
             <button
               className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+              title='List View'
               onClick={() => setViewMode('list')}
             >
               <span role="img" aria-label="List View">📋</span>
             </button>
+            <button
+              className="view-btn"
+              onClick={() => navigate('/addwebsearch')}
+              title="Add Web Search"
+            >
+             <FilePlus2 size={20}/>
+            </button>
           </div>
         </div>
       </div>
-      
+
       {loading ? (
         <div className="loading-container">
           <div className="spinner"></div>
@@ -205,8 +215,8 @@ function WebSearch() {
               <div className="note-content">
                 <h3>{webSearch.title}</h3>
                 <p>
-                  {webSearch.content.length > 100 
-                    ? webSearch.content.substring(0, 100) + "..." 
+                  {webSearch.content.length > 100
+                    ? webSearch.content.substring(0, 100) + "..."
                     : webSearch.content}
                 </p>
                 <div className="note-footer">
@@ -298,9 +308,9 @@ function WebSearch() {
                 {selectedWebSearch.reference_link && (
                   <div className="reference-link-section">
                     <h3>Reference Link</h3>
-                    <a 
-                      href={selectedWebSearch.reference_link} 
-                      target="_blank" 
+                    <a
+                      href={selectedWebSearch.reference_link}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="reference-link"
                     >
@@ -369,7 +379,7 @@ function WebSearch() {
                     placeholder="https://example.com"
                   />
                 </div>
-                
+
                 <div className="modal-actions">
                   <motion.button
                     type="submit"

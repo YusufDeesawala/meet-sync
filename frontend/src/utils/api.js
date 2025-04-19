@@ -1,4 +1,4 @@
-const BASE_URL = 'https://meet-sync-backend.vercel.app';
+const BASE_URL = process.env.REACT_APP_BASE_API_URL;
 
 export async function apiRequest(endpoint, method = 'GET', body = null, token = null) {
   const headers = { 'Content-Type': 'application/json' };

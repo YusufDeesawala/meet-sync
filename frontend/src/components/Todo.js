@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FiEdit, FiTrash2, FiCheckCircle } from 'react-icons/fi';
 import TodoContext from '../context/todoContext';
+import { ListTodo} from 'lucide-react';
 
 function Todo() {
   const { todos, getTodos, editTodo, deleteTodo } = useContext(TodoContext);
@@ -118,14 +119,23 @@ function Todo() {
             <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
               onClick={() => setViewMode('grid')}
+              title="Grid View"
             >
               <span role="img" aria-label="Grid View">📱</span>
             </button>
             <button
               className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
               onClick={() => setViewMode('list')}
+              title="List View"
             >
               <span role="img" aria-label="Todo Page">📋</span>
+            </button>
+            <button
+              className="view-btn"
+              onClick={() => navigate('/addtodo')}
+              title="Add Todo"
+            >
+             <ListTodo size={20}/>
             </button>
           </div>
         </div>

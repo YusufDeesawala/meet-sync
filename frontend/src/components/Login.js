@@ -9,7 +9,8 @@ function Login({ setIsAuthenticated }) {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const BASE_URL = 'https://meet-sync-backend.vercel.app';
+  const BASE_URL = process.env.REACT_APP_BASE_API_URL;
+  console.log(BASE_URL)
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });

@@ -1,7 +1,7 @@
 flask 
 flask-cors 
 whisper 
-openai-whisper 
+#openai-whisper 
 pydantic 
 python-multipart
 groq

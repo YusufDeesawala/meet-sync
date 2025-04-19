@@ -8,7 +8,7 @@ function Header({ isAuthenticated, onLogout }) {
   return (
     <header className="app-header">
       <div className="header-content">
-        <Link to="/home" className={location.pathname === "/home" ? "active" : ""}>
+        <Link to="/home" className={`text-decoration-none ${location.pathname === "/home" ? "active" : ""}`}>
           <motion.h1
             className="app-title"
             initial={{ scale: 0.9 }}
@@ -27,29 +27,14 @@ function Header({ isAuthenticated, onLogout }) {
                 My Notes
               </motion.div>
             </Link>
-            <Link to="/addnote" className={location.pathname === "/addnote" ? "active" : ""}>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                Add Note
-              </motion.div>
-            </Link>
             <Link to="/todo" className={location.pathname === "/todo" ? "active" : ""}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 My Todos
               </motion.div>
             </Link>
-            <Link to="/addtodo" className={location.pathname === "/addtodo" ? "active" : ""}>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                Add Todo
-              </motion.div>
-            </Link>
             <Link to="/websearch" className={location.pathname === "/notes" ? "active" : ""}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 My WebSearch
-              </motion.div>
-            </Link>
-            <Link to="/addwebsearch" className={location.pathname === "/addtodo" ? "active" : ""}>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                Add Web Search
               </motion.div>
             </Link>
             <motion.button

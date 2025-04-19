@@ -15,7 +15,6 @@ import Home from './components/Home';
 import WebSearch from './components/WebSearch';
 import AddWebSearch from './components/AddWebSearch';
 import WebSearchState from './context/WebSearchState';
-
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 

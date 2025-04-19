@@ -1,0 +1,12 @@
+flask 
+flask-cors 
+whisper 
+openai-whisper 
+pydantic 
+python-multipart
+groq
+instructor
+python-dotenv
+
+
+

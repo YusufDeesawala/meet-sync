@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <script>
+        // Function to store token in localStorage
+        function storeToken(token) {
+            localStorage.setItem('authToken', token);
+            window.location.href = '/home';
+        }
+    </script>
+</head>
+<body>
+    <h2>Login</h2>
+    <form method="POST" action="/">
+        <input name="email" placeholder="Email" required><br>
+        <input type="password" name="password" placeholder="Password" required><br>
+        <button type="submit">Login</button>
+    </form>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <p class="{{ category }}">{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+    
+    {% if token %}
+    <script>
+        storeToken("{{ token }}");
+    </script>
+    {% endif %}
+</body>
+</html>

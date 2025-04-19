@@ -1,154 +1,445 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Assistant</title>
+    <title>AI Meeting Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #16a34a;
+            --secondary-dark: #15803d;
+            --accent: #f59e0b;
+            --accent-dark: #d97706;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --light: #f9fafb;
+            --dark: #111827;
+            --gray: #6b7280;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --gradient: linear-gradient(135deg, var(--primary), #818cf8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 95%;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        header {
+            background: var(--gradient);
+            color: white;
+            padding: 30px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(rgba(255, 255, 255, 0.1), transparent);
+            animation: pulse 15s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.2;
+            }
+
+            50% {
+                transform: translate(5%, 5%) scale(1.1);
+                opacity: 0.3;
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.2;
+            }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .controls {
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 50px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--danger-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary:active:not(:disabled) {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:disabled {
+            background-color: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .panels-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .panels-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .panel-header {
+            background: #f9fafb;
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-status {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .panel-body {
+            padding: 20px;
+            min-height: 200px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        #transcription {
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+
+        .item-card {
+            margin-bottom: 20px;
+            border-radius: 10px;
+            background: #f9fafb;
+            overflow: hidden;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+            animation: slideIn 0.5s forwards;
+            opacity: 0;
+            transform: translateX(-20px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .item-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .item-card.note {
+            border-left-color: #06b6d4;
+        }
+
+        .item-card.email {
+            border-left-color: #ef4444;
+        }
+
+        .item-card.calendar_event {
+            border-left-color: #10b981;
+        }
+
+        .item-card.to_do {
+            border-left-color: #f59e0b;
+        }
+
+        .item-card.web_search {
+            border-left-color: #8b5cf6;
+        }
+
+        .item-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.02);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .item-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .item-title i {
+            color: #4f46e5;
+        }
+
+        .item-card.note .item-title i {
+            color: #06b6d4;
+        }
+
+        .item-card.email .item-title i {
+            color: #ef4444;
+        }
+
+        .item-card.calendar_event .item-title i {
+            color: #10b981;
+        }
+
+        .item-card.to_do .item-title i {
+            color: #f59e0b;
+        }
+
+        .item-card.web_search .item-title i {
+            color: #8b5cf6;
+        }
+
+        .item-content {
+            padding: 15px;
+            line-height: 1.6;
+        }
+
+        .item-details {
+            padding: 0 15px 15px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .item-detail {
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .item-actions {
+            padding: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .action-btn {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .edit-btn {
+            background: #f3f4f6;
+            color: var(--dark);
+        }
+
+        .edit-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .accept-btn {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .accept-btn:hover {
+            background: #bbf7d0;
+        }
+
+        .reject-btn {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .reject-btn:hover {
+            background: #fecaca;
+        }
+
+        .loader-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f9;
+            justify-content: center;
+            margin: 30px 0;
         }
-        h1, h2 {
-            color: #333;
-        }
-        .controls {
-            margin: 20px 0;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin: 0 10px;
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .edit-btn {
-            background-color: #ffc107;
-            padding: 5px 10px;
-            font-size: 14px;
-            margin: 0 5px;
-        }
-        .edit-btn:hover {
-            background-color: #e0a800;
-        }
-        .accept-btn {
-            background-color: #28a745;
-            padding: 5px 10px;
-            font-size: 14px;
-            margin: 0 5px;
-        }
-        .accept-btn:hover {
-            background-color: #218838;
-        }
-        .reject-btn {
-            background-color: #dc3545;
-            padding: 5px 10px;
-            font-size: 14px;
-            margin: 0 5px;
-        }
-        .reject-btn:hover {
-            background-color: #c82333;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            max-width: 800px;
-            width: 100%;
-        }
-        .panel {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            width: 100%;
-        }
-        #transcription {
-            min-height: 100px;
-            white-space: pre-wrap;
-        }
-        #actionItems {
-            min-height: 100px;
-        }
-        .item-card {
-            border-left: 4px solid #007bff;
-            padding: 10px;
-            margin-bottom: 10px;
-            background-color: #f8f9fa;
-        }
-        .item-card.note {
-            border-left-color: #17a2b8;
-        }
-        .item-card.email {
-            border-left-color: #dc3545;
-        }
-        .item-card.calendar_event {
-            border-left-color: #28a745;
-        }
-        .item-card.to_do {
-            border-left-color: #ffc107;
-        }
-        .item-card.web_search {
-            border-left-color: #6f42c1;
-        }
-        .item-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-            text-transform: capitalize;
-        }
-        .item-content {
-            margin-bottom: 5px;
-        }
-        .item-detail {
-            font-size: 0.9em;
-            color: #666;
-        }
-        .item-actions {
-            margin-top: 5px;
-            display: flex;
-            gap: 5px;
-        }
-        #error {
-            color: red;
-            margin-top: 10px;
-        }
-        .status {
-            font-style: italic;
-            color: #666;
-            margin-bottom: 10px;
-        }
+
         .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 36px;
-            height: 36px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            border-left-color: #007bff;
-            animation: spin 1s ease-in-out infinite;
-            margin: 20px auto;
-            display: none;
+            background: conic-gradient(from 0deg, var(--primary) 0%, #e0e7ff 100%);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #fff 0);
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #fff 0);
+            animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
+
+        .loader-text {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -156,133 +447,532 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            perspective: 1000px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
+
+        .modal.visible {
+            opacity: 1;
+        }
+
         .modal-content {
             background-color: white;
-            padding: 20px;
-            border-radius: 5px;
+            padding: 30px;
+            border-radius: 15px;
             width: 90%;
-            max-width: 500px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            max-width: 550px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: rotateX(20deg) scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
         }
-        .modal-content h3 {
-            margin-top: 0;
+
+        .modal.visible .modal-content {
+            transform: rotateX(0) scale(1);
+            opacity: 1;
         }
-        .modal-content label {
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
             display: block;
-            margin: 10px 0 5px;
-            font-weight: bold;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
         }
-        .modal-content input, .modal-content textarea {
+
+        .form-control {
             width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+            padding: 12px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .modal-content textarea {
-            height: 100px;
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            outline: none;
+        }
+
+        textarea.form-control {
+            min-height: 120px;
             resize: vertical;
         }
-        .modal-buttons {
+
+        .modal-footer {
             display: flex;
             justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cancel-btn {
+            background: #f3f4f6;
+            color: var(--dark);
+        }
+
+        .cancel-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .save-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        #error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        #error.visible {
+            display: block;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translateX(-1px);
+            }
+
+            20%,
+            80% {
+                transform: translateX(2px);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translateX(-4px);
+            }
+
+            40%,
+            60% {
+                transform: translateX(4px);
+            }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
             gap: 10px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
         }
-        .modal-buttons button {
-            padding: 8px 16px;
+
+        .toast.success {
+            background: var(--secondary);
         }
-        .modal-buttons .save-btn {
-            background-color: #28a745;
+
+        .toast.error {
+            background: var(--danger);
         }
-        .modal-buttons .save-btn:hover {
-            background-color: #218838;
+
+        .toast.visible {
+            transform: translateX(0);
         }
-        .modal-buttons .cancel-btn {
-            background-color: #6c757d;
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-left: auto;
+            padding: 0;
+            font-size: 1.2rem;
         }
-        .modal-buttons .cancel-btn:hover {
-            background-color: #5a6268;
+
+        .visualizer {
+            width: 100%;
+            height: 60px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .visualizer-bar {
+            width: 5px;
+            height: 5px;
+            background-color: var(--primary);
+            border-radius: 2px;
+            transition: height 0.2s ease;
+        }
+
+        .pulse {
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .speech-bubble {
+            position: relative;
+            background: #e0e7ff;
+            border-radius: 8px;
+            padding: 15px;
+            width: fit-content;
+            margin: 20px 0;
+            display: inline-block;
+            max-width: 80%;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+            border-bottom-color: #e0e7ff;
+            border-top: 0;
+            margin-top: -15px;
+        }
+
+        .no-items {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+            font-style: italic;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge-primary {
+            background: #e0e7ff;
+            color: var(--primary);
+        }
+
+        /* Type Icon Colors */
+        .icon-email {
+            color: #ef4444;
+        }
+
+        .icon-web_search {
+            color: #8b5cf6;
+        }
+
+        .icon-note {
+            color: #06b6d4;
+        }
+
+        .icon-to_do {
+            color: #f59e0b;
+        }
+
+        .icon-calendar_event {
+            color: #10b981;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header-content h1 {
+                font-size: 1.8rem;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+            font-size: 0.9rem;
         }
     </style>
 </head>
+
 <body>
+    <header>
+        <div class="container header-content">
+            <h1>
+                <i class="fas fa-microphone-alt logo-icon"></i>
+                AI Meeting Assistant
+            </h1>
+        </div>
+    </header>
+
     <div class="container">
-        <h1>Meeting Assistant</h1>
         <div class="controls">
-            <button id="startBtn">Start Recording</button>
-            <button id="stopBtn" disabled>Stop Recording</button>
+            <button id="startBtn" class="btn btn-primary">
+                <i class="fas fa-play"></i> Start Recording
+            </button>
+            <button id="stopBtn" class="btn btn-secondary" disabled>
+                <i class="fas fa-stop"></i> Stop Recording
+            </button>
         </div>
-        
-        <div class="panel">
-            <h2>Transcription</h2>
-            <div class="status" id="transcriptionStatus">Ready to record</div>
-            <div id="transcription">Transcription will appear here...</div>
+
+        <div id="visualizer" class="visualizer" style="display: none;">
+            <!-- Audio visualizer bars will be added here dynamically -->
         </div>
-        
-        <div class="spinner" id="spinner"></div>
-        
-        <div class="panel">
-            <h2>Action Items</h2>
-            <div class="status" id="actionItemsStatus">No action items yet</div>
-            <div id="actionItems">Action items will appear here after transcription...</div>
+
+        <div class="panels-container">
+            <div class="panel" style="animation-delay: 0.1s">
+                <div class="panel-header">
+                    <h2 class="panel-title"><i class="fas fa-comments"></i> Transcription</h2>
+                    <div class="panel-status" id="transcriptionStatus">
+                        <i class="fas fa-circle"></i> Ready to record
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="transcription" class="speech-bubble">Transcription will appear here...</div>
+                </div>
+            </div>
+
+            <div class="panel" style="animation-delay: 0.3s">
+                <div class="panel-header">
+                    <h2 class="panel-title"><i class="fas fa-tasks"></i> Action Items</h2>
+                    <div class="panel-status" id="actionItemsStatus">
+                        <i class="fas fa-circle"></i> No action items yet
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="actionItems" class="no-items">Action items will appear here after transcription...</div>
+                </div>
+            </div>
         </div>
-        
+
+        <div class="loader-container" id="loaderContainer" style="display: none;">
+            <div class="spinner"></div>
+            <div class="loader-text" id="loaderText">Processing...</div>
+        </div>
+
         <div id="error"></div>
     </div>
 
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <h3>Edit Action Item</h3>
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Action Item</h3>
+            </div>
             <form id="editForm">
                 <div id="editFields"></div>
-                <div class="modal-buttons">
-                    <button type="button" class="save-btn" id="saveEditBtn">Save</button>
-                    <button type="button" class="cancel-btn" id="cancelEditBtn">Cancel</button>
+                <div class="modal-footer">
+                    <button type="button" class="modal-btn cancel-btn" id="cancelEditBtn">Cancel</button>
+                    <button type="button" class="modal-btn save-btn" id="saveEditBtn">Save Changes</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <div id="toast" class="toast">
+        <i id="toastIcon" class="fas fa-check-circle"></i>
+        <span id="toastMessage">Message saved successfully</span>
+        <button class="toast-close" id="toastClose"><i class="fas fa-times"></i></button>
+    </div>
+
+    <footer>
+        © 2025 AI Meeting Assistant | Powered by AI
+    </footer>
+
     <script>
-        // Initializing the app url of this 
+        // Initializing the app url
         const APP_URL = "{{ base_url }}";
     </script>
-    
 
     <script>
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const transcriptionDiv = document.getElementById('transcription');
-        const actionItemsDiv = document.getElementById('actionItems');
-        const errorDiv = document.getElementById('error');
-        const spinner = document.getElementById('spinner');
-        const transcriptionStatus = document.getElementById('transcriptionStatus');
-        const actionItemsStatus = document.getElementById('actionItemsStatus');
-        const editModal = document.getElementById('editModal');
-        const editForm = document.getElementById('editForm');
-        const editFields = document.getElementById('editFields');
-        const saveEditBtn = document.getElementById('saveEditBtn');
-        const cancelEditBtn = document.getElementById('cancelEditBtn');
-        
-        let mediaRecorder;
-        let audioChunks = [];
-        let currentEditItem = null;
-        let recordedDuration = 0;
-
-        // Ensure content is initialized only once
         document.addEventListener('DOMContentLoaded', () => {
+            // UI Elements
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const transcriptionDiv = document.getElementById('transcription');
+            const actionItemsDiv = document.getElementById('actionItems');
+            const errorDiv = document.getElementById('error');
+            const loaderContainer = document.getElementById('loaderContainer');
+            const loaderText = document.getElementById('loaderText');
+            const transcriptionStatus = document.getElementById('transcriptionStatus');
+            const actionItemsStatus = document.getElementById('actionItemsStatus');
+            const editModal = document.getElementById('editModal');
+            const editForm = document.getElementById('editForm');
+            const editFields = document.getElementById('editFields');
+            const saveEditBtn = document.getElementById('saveEditBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastClose = document.getElementById('toastClose');
+            const visualizer = document.getElementById('visualizer');
+
+            // Audio recording variables
+            let mediaRecorder;
+            let audioChunks = [];
+            let currentEditItem = null;
+            let recordedDuration = 0;
+            let visualizerInterval;
+            let audioContext;
+            let analyzer;
+            let visualizerBars = [];
+
+            // Create audio visualizer
+            function createVisualizer() {
+                visualizer.innerHTML = '';
+                visualizer.style.display = 'flex';
+
+                for (let i = 0; i < 20; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'visualizer-bar';
+                    visualizer.appendChild(bar);
+                    visualizerBars.push(bar);
+                }
+            }
+
+            // Update visualizer with audio data
+            function updateVisualizer() {
+                if (!analyzer) return;
+
+                const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+                analyzer.getByteFrequencyData(dataArray);
+
+                const step = Math.floor(dataArray.length / visualizerBars.length);
+
+                for (let i = 0; i < visualizerBars.length; i++) {
+                    const value = dataArray[i * step];
+                    const height = Math.max(3, value / 2); // Scale the height
+                    visualizerBars[i].style.height = `${height}px`;
+                }
+            }
+
+            // Show toast notification
+            function showToast(message, type = 'success') {
+                toastMessage.textContent = message;
+                toast.className = `toast ${type}`;
+
+                if (type === 'success') {
+                    toastIcon.className = 'fas fa-check-circle';
+                } else {
+                    toastIcon.className = 'fas fa-exclamation-circle';
+                }
+
+                setTimeout(() => {
+                    toast.classList.add('visible');
+                }, 100);
+
+                setTimeout(() => {
+                    toast.classList.remove('visible');
+                }, 3000);
+            }
+
+            // Show error message
+            function showError(message) {
+                errorDiv.textContent = message;
+                errorDiv.classList.add('visible');
+
+                setTimeout(() => {
+                    errorDiv.classList.remove('visible');
+                    setTimeout(() => {
+                        errorDiv.textContent = '';
+                        errorDiv.style.display = 'none';
+                    }, 300);
+                }, 3000);
+            }
+
+            // Show loading spinner
+            function showLoader(message) {
+                loaderText.textContent = message;
+                loaderContainer.style.display = 'flex';
+            }
+
+            // Hide loading spinner
+            function hideLoader() {
+                loaderContainer.style.display = 'none';
+            }
+
+            // Start recording
             startBtn.addEventListener('click', async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream);
                     recordedDuration = 0;
                     const startTime = Date.now();
+                    audioChunks = [];
+
+                    // Set up audio analyzer for visualizer
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioContext.createMediaStreamSource(stream);
+                    analyzer = audioContext.createAnalyser();
+                    analyzer.fftSize = 256;
+                    source.connect(analyzer);
+
+                    createVisualizer();
+                    visualizerInterval = setInterval(updateVisualizer, 50);
 
                     mediaRecorder.ondataavailable = (event) => {
                         if (event.data.size > 0) {
@@ -293,418 +983,549 @@
                     mediaRecorder.onstop = async () => {
                         recordedDuration = (Date.now() - startTime) / 1000;
                         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        audioChunks = [];
+                        clearInterval(visualizerInterval);
+                        visualizer.style.display = 'none';
                         await processAudio(audioBlob);
                         stream.getTracks().forEach(track => track.stop());
+                        if (audioContext) {
+                            audioContext.close();
+                            audioContext = null;
+                            analyzer = null;
+                        }
                     };
 
                     mediaRecorder.start();
                     startBtn.disabled = true;
                     stopBtn.disabled = false;
-                    transcriptionStatus.textContent = 'Recording...';
+                    updateStatus(transcriptionStatus, 'Recording...', 'fa-microphone-alt', '#ef4444');
                     transcriptionDiv.textContent = '';
-                    actionItemsStatus.textContent = 'Waiting for recording to complete...';
-                    actionItemsDiv.textContent = '';
+                    updateStatus(actionItemsStatus, 'Waiting for recording to complete...', 'fa-hourglass', '#f59e0b');
+                    actionItemsDiv.innerHTML = '';
                     errorDiv.textContent = '';
+                    errorDiv.style.display = 'none';
+
+                    // Add recording animation to transcription panel
+                    const panel = transcriptionDiv.closest('.panel');
+                    panel.classList.add('pulse');
+
                 } catch (err) {
-                    errorDiv.textContent = 'Error accessing microphone: ' + err.message;
+                    showError('Error accessing microphone: ' + err.message);
                 }
             });
 
+            // Stop recording
             stopBtn.addEventListener('click', () => {
                 if (mediaRecorder && mediaRecorder.state === 'recording') {
                     mediaRecorder.stop();
                     startBtn.disabled = false;
                     stopBtn.disabled = true;
-                    transcriptionStatus.textContent = `Processing audio... (may take ~${Math.ceil(recordedDuration)} seconds for longer recordings)`;
-                    spinner.style.display = 'block';
+                    updateStatus(transcriptionStatus, `Processing audio... (may take ~${Math.ceil(recordedDuration)} seconds)`, 'fa-cog fa-spin', '#f59e0b');
+                    showLoader(`Processing audio... This may take about ${Math.ceil(recordedDuration)} seconds for longer recordings`);
+
+                    // Remove recording animation
+                    const panel = transcriptionDiv.closest('.panel');
+                    panel.classList.remove('pulse');
                 }
             });
-        });
 
-        async function processAudio(audioBlob) {
-            try {
-                const transcription = await transcribeAudio(audioBlob);
-                if (!transcription) return;
-                await extractActionItems(transcription);
-            } catch (err) {
-                errorDiv.textContent = 'Processing error: ' + err.message;
-                spinner.style.display = 'none';
+            // Update status display
+            function updateStatus(element, text, iconClass, color = null) {
+                element.innerHTML = `<i class="fas ${iconClass}"></i> ${text}`;
+                if (color) {
+                    element.style.color = color;
+                }
             }
-        }
 
-        async function transcribeAudio(audioBlob) {
-            try {
-                transcriptionStatus.textContent = `Transcribing audio... (may take ~${Math.ceil(recordedDuration)} seconds for longer recordings)`;
-                const formData = new FormData();
-                formData.append('file', audioBlob, 'recording.webm');
+            // Process recorded audio
+            async function processAudio(audioBlob) {
+                try {
+                    const transcription = await transcribeAudio(audioBlob);
+                    if (!transcription) return;
+                    await extractActionItems(transcription);
+                } catch (err) {
+                    showError('Processing error: ' + err.message);
+                    hideLoader();
+                }
+            }
 
-                //Replace this below if your are using it for the production = "http://localhost:8000/transcribe"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/transcribe`
-                const response = await fetch(`${APP_URL}/transcribe`, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'include'
-                });
+            // Transcribe audio
+            async function transcribeAudio(audioBlob) {
+                try {
+                    updateStatus(transcriptionStatus, `Transcribing audio... (may take ~${Math.ceil(recordedDuration)} seconds)`, 'fa-cog fa-spin', '#f59e0b');
+                    showLoader(`Transcribing audio... This may take about ${Math.ceil(recordedDuration)} seconds`);
 
-                const result = await response.json();
+                    const formData = new FormData();
+                    formData.append('file', audioBlob, 'recording.webm');
 
-                if (response.ok && result.transcription) {
-                    transcriptionDiv.textContent = result.transcription;
-                    transcriptionStatus.textContent = 'Transcription complete';
-                    return result.transcription;
-                } else {
-                    transcriptionStatus.textContent = 'Transcription failed';
-                    errorDiv.textContent = result.error || 'Unknown transcription error';
-                    spinner.style.display = 'none';
+                    const response = await fetch(`${APP_URL}/transcribe`, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'include'
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.transcription) {
+                        // Animated transcription display
+                        transcriptionDiv.innerHTML = '';
+                        transcriptionDiv.className = 'speech-bubble';
+
+                        // Add animation delay to make it look like it's being typed
+                        setTimeout(() => {
+                            transcriptionDiv.textContent = result.transcription;
+                            transcriptionDiv.style.opacity = 1;
+                            updateStatus(transcriptionStatus, 'Transcription complete', 'fa-check-circle', '#10b981');
+                        }, 300);
+
+                        return result.transcription;
+                    } else {
+                        updateStatus(transcriptionStatus, 'Transcription failed', 'fa-times-circle', '#ef4444');
+                        showError(result.error || 'Unknown transcription error');
+                        hideLoader();
+                        return null;
+                    }
+                } catch (err) {
+                    updateStatus(transcriptionStatus, 'Transcription failed', 'fa-times-circle', '#ef4444');
+                    showError('Network error during transcription: ' + err.message);
+                    hideLoader();
                     return null;
                 }
-            } catch (err) {
-                transcriptionStatus.textContent = 'Transcription failed';
-                errorDiv.textContent = 'Network error during transcription: ' + err.message;
-                spinner.style.display = 'none';
-                return null;
             }
-        }
 
-        async function extractActionItems(transcription) {
-            try {
-                actionItemsStatus.textContent = 'Extracting action items...';
+            // Extract action items from transcription
+            async function extractActionItems(transcription) {
+                try {
+                    updateStatus(actionItemsStatus, 'Extracting action items...', 'fa-cog fa-spin', '#f59e0b');
+                    showLoader('Analyzing transcription and extracting action items...');
 
-                //Replace this below if your are using it for the production = "http://localhost:8000/extract-action-items'"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/extract-action-items`
-                const extractResponse = await fetch(`${APP_URL}/extract-action-items`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ transcript: transcription })
-                });
+                    const extractResponse = await fetch(`${APP_URL}/extract-action-items`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ transcript: transcription })
+                    });
 
-                const extractResult = await extractResponse.json();
+                    const extractResult = await extractResponse.json();
 
-                if (!extractResponse.ok) {
-                    actionItemsStatus.textContent = 'Failed to extract action items';
-                    actionItemsDiv.textContent = 'Could not extract action items.';
-                    errorDiv.textContent = extractResult.error || 'Unknown error extracting action items';
-                    spinner.style.display = 'none';
+                    if (!extractResponse.ok) {
+                        updateStatus(actionItemsStatus, 'Failed to extract action items', 'fa-times-circle', '#ef4444');
+                        showError(extractResult.error || 'Unknown error extracting action items');
+                        hideLoader();
+                        return;
+                    }
+
+                    updateStatus(actionItemsStatus, 'Fetching action items...', 'fa-cog fa-spin', '#f59e0b');
+                    await fetchJsonFiles();
+                } catch (err) {
+                    hideLoader();
+                    updateStatus(actionItemsStatus, 'Failed to extract action items', 'fa-times-circle', '#ef4444');
+                    showError('Network error during extraction: ' + err.message);
+                }
+            }
+
+            // Fetch JSON files with action items
+            async function fetchJsonFiles() {
+                try {
+                    const jsonResponse = await fetch(`${APP_URL}/get-json-files`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+
+                    const jsonResult = await jsonResponse.json();
+                    hideLoader();
+
+                    if (jsonResponse.ok) {
+                        actionItemsDiv.innerHTML = ''; // Clear existing content
+                        displayActionItems(jsonResult);
+                        const totalItems = jsonResult.emails.length + jsonResult.web_searches.length +
+                            jsonResult.notes.length + jsonResult.todos.length +
+                            jsonResult.calendar_events.length;
+
+                        updateStatus(
+                            actionItemsStatus,
+                            `${totalItems} action item${totalItems !== 1 ? 's' : ''} extracted`,
+                            'fa-check-circle',
+                            '#10b981'
+                        );
+
+                        if (totalItems > 0) {
+                            showToast(`Successfully extracted ${totalItems} action item${totalItems !== 1 ? 's' : ''}`, 'success');
+                        } else {
+                            showToast('No action items found in the conversation', 'error');
+                        }
+                    } else {
+                        updateStatus(actionItemsStatus, 'Failed to fetch action items', 'fa-times-circle', '#ef4444');
+                        showError(jsonResult.error || 'Unknown error fetching action items');
+                    }
+                } catch (err) {
+                    hideLoader();
+                    updateStatus(actionItemsStatus, 'Failed to fetch action items', 'fa-times-circle', '#ef4444');
+                    showError('Network error during action items fetch: ' + err.message);
+                }
+            }
+
+            // Display action items
+            function displayActionItems(jsonData) {
+                const { emails, web_searches, notes, todos, calendar_events } = jsonData;
+                const totalItems = emails.length + web_searches.length + notes.length + todos.length + calendar_events.length;
+
+                if (totalItems === 0) {
+                    actionItemsDiv.innerHTML = `
+                        <div class="no-items">
+                            <i class="fas fa-search fa-2x" style="color: #9ca3af; margin-bottom: 15px;"></i>
+                            <p>No action items found in the conversation.</p>
+                        </div>
+                    `;
                     return;
                 }
 
-                actionItemsStatus.textContent = 'Fetching JSON files...';
-                await fetchJsonFiles();
-            } catch (err) {
-                spinner.style.display = 'none';
-                actionItemsStatus.textContent = 'Failed to fetch JSON files';
-                errorDiv.textContent = 'Network error during JSON fetch: ' + err.message;
-            }
-        }
+                // Clear container
+                actionItemsDiv.innerHTML = '';
 
-        async function fetchJsonFiles() {
-            try {
+                // Add items with staggered animation delay
+                let delayCounter = 0;
 
-                //Replace this below if your are using it for the production = "http://localhost:8000/get-json-files"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/get-json-files`
-                const jsonResponse = await fetch(`${APP_URL}/get-json-files`, {
-                    method: 'GET',
-                    credentials: 'include'
+                emails.forEach((item, index) => {
+                    const itemCard = createItemCard('email', item, index, 'emails', delayCounter);
+                    actionItemsDiv.appendChild(itemCard);
+                    delayCounter += 0.1;
                 });
 
-                const jsonResult = await jsonResponse.json();
-                spinner.style.display = 'none';
-
-                if (jsonResponse.ok) {
-                    actionItemsDiv.innerHTML = ''; // Clear existing content to prevent duplication
-                    displayActionItems(jsonResult);
-                    const totalItems = jsonResult.emails.length + jsonResult.web_searches.length + 
-                                      jsonResult.notes.length + jsonResult.todos.length + 
-                                      jsonResult.calendar_events.length;
-                    actionItemsStatus.textContent = `${totalItems} action item${totalItems !== 1 ? 's' : ''} extracted`;
-                } else {
-                    actionItemsStatus.textContent = 'Failed to fetch JSON files';
-                    actionItemsDiv.textContent = 'Could not fetch JSON files.';
-                    errorDiv.textContent = jsonResult.error || 'Unknown error fetching JSON files';
-                }
-            } catch (err) {
-                spinner.style.display = 'none';
-                actionItemsStatus.textContent = 'Failed to fetch JSON files';
-                errorDiv.textContent = 'Network error during JSON fetch: ' + err.message;
-            }
-        }
-
-        function displayActionItems(jsonData) {
-            const { emails, web_searches, notes, todos, calendar_events } = jsonData;
-            const totalItems = emails.length + web_searches.length + notes.length + todos.length + calendar_events.length;
-
-            if (totalItems === 0) {
-                actionItemsDiv.textContent = 'No action items found in JSON files.';
-                return;
-            }
-
-            emails.forEach((item, index) => {
-                const itemCard = createItemCard('email', item, index, 'emails');
-                actionItemsDiv.appendChild(itemCard);
-            });
-
-            web_searches.forEach((item, index) => {
-                const itemCard = createItemCard('web_search', item, index, 'web_searches');
-                actionItemsDiv.appendChild(itemCard);
-            });
-
-            notes.forEach((item, index) => {
-                const itemCard = createItemCard('note', item, index, 'notes');
-                actionItemsDiv.appendChild(itemCard);
-            });
-
-            todos.forEach((item, index) => {
-                const itemCard = createItemCard('to_do', item, index, 'todos');
-                actionItemsDiv.appendChild(itemCard);
-            });
-
-            calendar_events.forEach((item, index) => {
-                const itemCard = createItemCard('calendar_event', item, index, 'calendar_events');
-                actionItemsDiv.appendChild(itemCard);
-            });
-        }
-
-        function createItemCard(type, item, index, fileType) {
-            const itemCard = document.createElement('div');
-            itemCard.className = `item-card ${type}`;
-            
-            const title = document.createElement('div');
-            title.className = 'item-title';
-            title.textContent = type === 'note' ? (item.title || 'Note') : type.replace('_', ' ');
-            itemCard.appendChild(title);
-            
-            const content = document.createElement('div');
-            content.className = 'item-content';
-            content.textContent = type === 'email' ? item.body : 
-                                 type === 'note' ? item.description : 
-                                 item.content;
-            itemCard.appendChild(content);
-            
-            const details = document.createElement('div');
-            details.className = 'item-details';
-            
-            if (type === 'email') {
-                if (item.recipient) {
-                    const recipient = document.createElement('div');
-                    recipient.className = 'item-detail';
-                    recipient.textContent = `To: ${item.recipient}`;
-                    details.appendChild(recipient);
-                }
-                if (item.subject) {
-                    const subject = document.createElement('div');
-                    subject.className = 'item-detail';
-                    subject.textContent = `Subject: ${item.subject}`;
-                    details.appendChild(subject);
-                }
-            } else if (type === 'note' && item.tag) {
-                const tag = document.createElement('div');
-                tag.className = 'item-detail';
-                tag.textContent = `Tag: ${item.tag}`;
-                details.appendChild(tag);
-            }
-            
-            if (details.hasChildNodes()) {
-                itemCard.appendChild(details);
-            }
-            
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'item-actions';
-            
-            const editBtn = document.createElement('button');
-            editBtn.className = 'edit-btn';
-            editBtn.textContent = 'Edit';
-            editBtn.onclick = () => openEditModal(type, item, index, fileType);
-            actionsDiv.appendChild(editBtn);
-            
-            const acceptBtn = document.createElement('button');
-            acceptBtn.className = 'accept-btn';
-            acceptBtn.innerHTML = '✔';
-            acceptBtn.onclick = () => handleAction(type, item, index, fileType, 'accept', acceptBtn, editBtn, rejectBtn);
-            actionsDiv.appendChild(acceptBtn);
-            
-            const rejectBtn = document.createElement('button');
-            rejectBtn.className = 'reject-btn';
-            rejectBtn.innerHTML = '✖';
-            rejectBtn.onclick = () => handleAction(type, item, index, fileType, 'reject', rejectBtn, editBtn, acceptBtn);
-            actionsDiv.appendChild(rejectBtn);
-            
-            itemCard.appendChild(actionsDiv);
-            
-            return itemCard;
-        }
-
-        async function handleAction(type, item, index, fileType, action, clickedBtn, ...otherBtns) {
-            try {
-                spinner.style.display = 'block';
-                clickedBtn.disabled = true;
-                otherBtns.forEach(btn => btn.disabled = true);
-
-                const payload = { file_type: fileType, index, item };
-                const endpoint = action === 'accept' ? '/accept-action-item' : '/reject-action-item';
-
-                //Replace this below if your are using it for the production = "http://localhost:8000${endpoint}"
-                //Replace this below if you are using it for the deployement = `${APP_URL}${endpoint}`
-                const url = `${APP_URL}${endpoint}`; // Replace with deployed Flask URL
-
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify(payload)
+                web_searches.forEach((item, index) => {
+                    const itemCard = createItemCard('web_search', item, index, 'web_searches', delayCounter);
+                    actionItemsDiv.appendChild(itemCard);
+                    delayCounter += 0.1;
                 });
 
-                const result = await response.json();
-                spinner.style.display = 'none';
+                notes.forEach((item, index) => {
+                    const itemCard = createItemCard('note', item, index, 'notes', delayCounter);
+                    actionItemsDiv.appendChild(itemCard);
+                    delayCounter += 0.1;
+                });
 
-                if (response.ok) {
-                    await fetchJsonFiles();
-                    errorDiv.textContent = `Item ${action}ed successfully`;
-                    setTimeout(() => errorDiv.textContent = '', 3000);
-                } else {
-                    errorDiv.textContent = result.error || `Failed to ${action} item`;
+                todos.forEach((item, index) => {
+                    const itemCard = createItemCard('to_do', item, index, 'todos', delayCounter);
+                    actionItemsDiv.appendChild(itemCard);
+                    delayCounter += 0.1;
+                });
+
+                calendar_events.forEach((item, index) => {
+                    const itemCard = createItemCard('calendar_event', item, index, 'calendar_events', delayCounter);
+                    actionItemsDiv.appendChild(itemCard);
+                    delayCounter += 0.1;
+                });
+            }
+
+            // Create item card for each action item
+            function createItemCard(type, item, index, fileType, delay) {
+                const itemCard = document.createElement('div');
+                itemCard.className = `item-card ${type}`;
+                itemCard.style.animationDelay = `${delay}s`;
+
+                // Get appropriate icon and label for each type
+                const iconClass = getIconForType(type);
+                const typeLabel = getTypeLabel(type);
+
+                const itemHeader = document.createElement('div');
+                itemHeader.className = 'item-header';
+
+                const title = document.createElement('div');
+                title.className = 'item-title';
+                title.innerHTML = `<i class="${iconClass} icon-${type}"></i> ${type === 'note' ? (item.title || 'Note') : typeLabel}`;
+                itemHeader.appendChild(title);
+
+                itemCard.appendChild(itemHeader);
+
+                const content = document.createElement('div');
+                content.className = 'item-content';
+                content.textContent = type === 'email' ? item.body :
+                    type === 'note' ? item.description :
+                        item.content;
+                itemCard.appendChild(content);
+
+                const details = document.createElement('div');
+                details.className = 'item-details';
+
+                if (type === 'email') {
+                    if (item.recipient) {
+                        const recipient = document.createElement('div');
+                        recipient.className = 'item-detail';
+                        recipient.innerHTML = `<i class="fas fa-user"></i> ${item.recipient}`;
+                        details.appendChild(recipient);
+                    }
+                    if (item.subject) {
+                        const subject = document.createElement('div');
+                        subject.className = 'item-detail';
+                        subject.innerHTML = `<i class="fas fa-envelope"></i> ${item.subject}`;
+                        details.appendChild(subject);
+                    }
+                } else if (type === 'note' && item.tag) {
+                    const tag = document.createElement('div');
+                    tag.className = 'item-detail';
+                    tag.innerHTML = `<i class="fas fa-tag"></i> ${item.tag}`;
+                    details.appendChild(tag);
+                }
+
+                if (details.hasChildNodes()) {
+                    itemCard.appendChild(details);
+                }
+
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'item-actions';
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'action-btn edit-btn';
+                editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
+                editBtn.onclick = () => openEditModal(type, item, index, fileType);
+                actionsDiv.appendChild(editBtn);
+
+                const acceptBtn = document.createElement('button');
+                acceptBtn.className = 'action-btn accept-btn';
+                acceptBtn.innerHTML = '<i class="fas fa-check"></i> Accept';
+                acceptBtn.onclick = () => handleAction(type, item, index, fileType, 'accept', acceptBtn, editBtn, rejectBtn);
+                actionsDiv.appendChild(acceptBtn);
+
+                const rejectBtn = document.createElement('button');
+                rejectBtn.className = 'action-btn reject-btn';
+                rejectBtn.innerHTML = '<i class="fas fa-times"></i> Reject';
+                rejectBtn.onclick = () => handleAction(type, item, index, fileType, 'reject', rejectBtn, editBtn, acceptBtn);
+                actionsDiv.appendChild(rejectBtn);
+
+                itemCard.appendChild(actionsDiv);
+
+                return itemCard;
+            }
+
+            // Get icon for action item type
+            function getIconForType(type) {
+                switch (type) {
+                    case 'email': return 'fas fa-envelope';
+                    case 'web_search': return 'fas fa-search';
+                    case 'note': return 'fas fa-sticky-note';
+                    case 'to_do': return 'fas fa-tasks';
+                    case 'calendar_event': return 'fas fa-calendar-alt';
+                    default: return 'fas fa-file';
+                }
+            }
+
+            // Get label for action item type
+            function getTypeLabel(type) {
+                switch (type) {
+                    case 'email': return 'Email';
+                    case 'web_search': return 'Web Search';
+                    case 'note': return 'Note';
+                    case 'to_do': return 'To-Do Item';
+                    case 'calendar_event': return 'Calendar Event';
+                    default: return type.replace('_', ' ');
+                }
+            }
+
+            // Handle action (accept/reject)
+            async function handleAction(type, item, index, fileType, action, clickedBtn, ...otherBtns) {
+                try {
+                    showLoader(`${action === 'accept' ? 'Accepting' : 'Rejecting'} action item...`);
+                    clickedBtn.disabled = true;
+                    otherBtns.forEach(btn => btn.disabled = true);
+
+                    const payload = { file_type: fileType, index, item };
+                    const endpoint = action === 'accept' ? '/accept-action-item' : '/reject-action-item';
+                    const url = `${APP_URL}${endpoint}`;
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    hideLoader();
+
+                    if (response.ok) {
+                        await fetchJsonFiles();
+                        showToast(`Item ${action === 'accept' ? 'accepted' : 'rejected'} successfully`, 'success');
+                    } else {
+                        showError(result.error || `Failed to ${action} item`);
+                        clickedBtn.disabled = false;
+                        otherBtns.forEach(btn => btn.disabled = false);
+                    }
+                } catch (err) {
+                    hideLoader();
+                    showError(`Network error during ${action}: ${err.message}`);
                     clickedBtn.disabled = false;
                     otherBtns.forEach(btn => btn.disabled = false);
                 }
-            } catch (err) {
-                spinner.style.display = 'none';
-                errorDiv.textContent = `Network error during ${action}: ${err.message}`;
-                clickedBtn.disabled = false;
-                otherBtns.forEach(btn => btn.disabled = false);
-            }
-        }
-
-        function openEditModal(type, item, index, fileType) {
-            currentEditItem = { type, item, index, fileType };
-            editFields.innerHTML = '';
-
-            if (type === 'email') {
-                editFields.innerHTML = `
-                    <label for="recipient">Recipient</label>
-                    <input type="text" id="recipient" name="recipient" value="${item.recipient || ''}">
-                    <label for="subject">Subject</label>
-                    <input type="text" id="subject" name="subject" value="${item.subject || ''}">
-                    <label for="body">Body</label>
-                    <textarea id="body" name="body">${item.body || ''}</textarea>
-                `;
-            } else if (type === 'web_search') {
-                editFields.innerHTML = `
-                    <label for="content">Content</label>
-                    <textarea id="content" name="content">${item.content || ''}</textarea>
-                `;
-            } else if (type === 'note') {
-                editFields.innerHTML = `
-                    <label for="title">Title</label>
-                    <input type="text" id="title" name="title" value="${item.title || ''}">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description">${item.description || ''}</textarea>
-                    <label for="tag">Tag</label>
-                    <input type="text" id="tag" name="tag" value="${item.tag || ''}">
-                `;
-            } else if (type === 'to_do') {
-                editFields.innerHTML = `
-                    <label for="content">Task</label>
-                    <textarea id="content" name="content">${item.content || ''}</textarea>
-                `;
-            } else if (type === 'calendar_event') {
-                editFields.innerHTML = `
-                    <label for="content">Event</label>
-                    <textarea id="content" name="content">${item.content || ''}</textarea>
-                `;
             }
 
-            editModal.style.display = 'flex';
-        }
-
-        saveEditBtn.addEventListener('click', async () => {
-            if (!currentEditItem) return;
-
-            const { type, index, fileType } = currentEditItem;
-            let updatedItem;
-
-            if (type === 'email') {
-                updatedItem = {
-                    type: 'email',
-                    recipient: document.getElementById('recipient').value,
-                    subject: document.getElementById('subject').value,
-                    body: document.getElementById('body').value
-                };
-            } else if (type === 'web_search') {
-                updatedItem = {
-                    type: 'web_search',
-                    content: document.getElementById('content').value
-                };
-            } else if (type === 'note') {
-                updatedItem = {
-                    title: document.getElementById('title').value,
-                    description: document.getElementById('description').value,
-                    tag: document.getElementById('tag').value
-                };
-            } else if (type === 'to_do') {
-                updatedItem = {
-                    type: 'to_do',
-                    content: document.getElementById('content').value
-                };
-            } else if (type === 'calendar_event') {
-                updatedItem = {
-                    type: 'calendar_event',
-                    content: document.getElementById('content').value
-                };
-            }
-
-            try {
-                spinner.style.display = 'block';
-    
-                //Replace this below if your are using it for the production = "http://localhost:8000/update-json-file"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/update-json-file`
-                const response = await fetch(`${APP_URL}/update-json-file`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        file_type: fileType,
-                        index: index,
-                        item: updatedItem
-                    })
-                });
-
-                const result = await response.json();
-                spinner.style.display = 'none';
-
-                if (response.ok) {
-                    editModal.style.display = 'none';
-                    await fetchJsonFiles();
-                    errorDiv.textContent = 'Item updated successfully';
-                    setTimeout(() => errorDiv.textContent = '', 3000);
-                } else {
-                    errorDiv.textContent = result.error || 'Failed to update item';
-                }
-            } catch (err) {
-                spinner.style.display = 'none';
-                errorDiv.textContent = 'Network error during update: ' + err.message;
-            }
-        });
-
-        cancelEditBtn.addEventListener('click', () => {
-            editModal.style.display = 'none';
-            currentEditItem = null;
-            editFields.innerHTML = '';
-        });
-
-        editModal.addEventListener('click', (e) => {
-            if (e.target === editModal) {
-                editModal.style.display = 'none';
-                currentEditItem = null;
+            // Open edit modal
+            function openEditModal(type, item, index, fileType) {
+                currentEditItem = { type, item, index, fileType };
                 editFields.innerHTML = '';
+
+                // Create appropriate form fields based on item type
+                if (type === 'email') {
+                    editFields.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label" for="recipient">Recipient</label>
+                            <input type="text" class="form-control" id="recipient" name="recipient" value="${item.recipient || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="subject">Subject</label>
+                            <input type="text" class="form-control" id="subject" name="subject" value="${item.subject || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="body">Body</label>
+                            <textarea class="form-control" id="body" name="body">${item.body || ''}</textarea>
+                        </div>
+                    `;
+                } else if (type === 'web_search') {
+                    editFields.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label" for="content">Search Query</label>
+                            <textarea class="form-control" id="content" name="content">${item.content || ''}</textarea>
+                        </div>
+                    `;
+                } else if (type === 'note') {
+                    editFields.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label" for="title">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" value="${item.title || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="description">Description</label>
+                            <textarea class="form-control" id="description" name="description">${item.description || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="tag">Tag</label>
+                            <input type="text" class="form-control" id="tag" name="tag" value="${item.tag || ''}">
+                        </div>
+                    `;
+                } else if (type === 'to_do') {
+                    editFields.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label" for="content">Task</label>
+                            <textarea class="form-control" id="content" name="content">${item.content || ''}</textarea>
+                        </div>
+                    `;
+                } else if (type === 'calendar_event') {
+                    editFields.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label" for="content">Event</label>
+                            <textarea class="form-control" id="content" name="content">${item.content || ''}</textarea>
+                        </div>
+                    `;
+                }
+
+                // Show modal with animation
+                editModal.style.display = 'flex';
+                setTimeout(() => {
+                    editModal.classList.add('visible');
+                }, 10);
             }
+
+            // Save edited item
+            saveEditBtn.addEventListener('click', async () => {
+                if (!currentEditItem) return;
+
+                const { type, index, fileType } = currentEditItem;
+                let updatedItem;
+
+                // Gather form data based on item type
+                if (type === 'email') {
+                    updatedItem = {
+                        type: 'email',
+                        recipient: document.getElementById('recipient').value,
+                        subject: document.getElementById('subject').value,
+                        body: document.getElementById('body').value
+                    };
+                } else if (type === 'web_search') {
+                    updatedItem = {
+                        type: 'web_search',
+                        content: document.getElementById('content').value
+                    };
+                } else if (type === 'note') {
+                    updatedItem = {
+                        title: document.getElementById('title').value,
+                        description: document.getElementById('description').value,
+                        tag: document.getElementById('tag').value
+                    };
+                } else if (type === 'to_do') {
+                    updatedItem = {
+                        type: 'to_do',
+                        content: document.getElementById('content').value
+                    };
+                } else if (type === 'calendar_event') {
+                    updatedItem = {
+                        type: 'calendar_event',
+                        content: document.getElementById('content').value
+                    };
+                }
+
+                try {
+                    showLoader('Updating action item...');
+
+                    const response = await fetch(`${APP_URL}/update-json-file`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            file_type: fileType,
+                            index: index,
+                            item: updatedItem
+                        })
+                    });
+
+                    const result = await response.json();
+                    hideLoader();
+
+                    if (response.ok) {
+                        closeModal();
+                        await fetchJsonFiles();
+                        showToast('Item updated successfully', 'success');
+                    } else {
+                        showError(result.error || 'Failed to update item');
+                    }
+                } catch (err) {
+                    hideLoader();
+                    showError('Network error during update: ' + err.message);
+                }
+            });
+
+            // Close modal
+            function closeModal() {
+                editModal.classList.remove('visible');
+                setTimeout(() => {
+                    editModal.style.display = 'none';
+                    currentEditItem = null;
+                    editFields.innerHTML = '';
+                }, 300);
+            }
+
+            // Cancel edit
+            cancelEditBtn.addEventListener('click', closeModal);
+
+            // Close modal when clicking outside
+            editModal.addEventListener('click', (e) => {
+                if (e.target === editModal) {
+                    closeModal();
+                }
+            });
+
+            // Close toast notification
+            toastClose.addEventListener('click', () => {
+                toast.classList.remove('visible');
+            });
+
+            // Initialize the app
+            errorDiv.style.display = 'none';
         });
     </script>
 </body>
+
 </html>

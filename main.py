@@ -90,7 +90,7 @@ def convert_action_items(action_items):
         elif item_type == "web_search":
             web_searches.append({
                 "title": item.get("content", "")
-            })
+            })  
         elif item_type == "note":
             notes.append({
                 "title": item.get("title", ""),

@@ -17,6 +17,8 @@ app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 BASE_URL = os.getenv('BASE_URL')
+
+
 CORS(app, resources={
     r"/*": {
         "origins": ["http://localhost:8080", "http://localhost"],
@@ -411,7 +413,8 @@ def home():
     if 'token' not in session:
         return redirect(url_for('login'))
     
-    return render_template('index.html')
+    app_url = os.getenv('APP_URL', os.getenv('APP_URL'))
+    return render_template('index.html', app_url= app_url)
 
 # Login route
 @app.route('/', methods=['GET', 'POST'])

@@ -250,6 +250,12 @@
     </div>
 
     <script>
+        // Initializing the app url of this 
+        const APP_URL = "{{ base_url }}";
+    </script>
+    
+
+    <script>
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const transcriptionDiv = document.getElementById('transcription');
@@ -333,7 +339,9 @@
                 const formData = new FormData();
                 formData.append('file', audioBlob, 'recording.webm');
 
-                const response = await fetch('http://localhost:8000/transcribe', {
+                //Replace this below if your are using it for the production = "http://localhost:8000/transcribe"
+                //Replace this below if you are using it for the deployement = `${APP_URL}/transcribe`
+                const response = await fetch(`${APP_URL}/transcribe`, {
                     method: 'POST',
                     body: formData,
                     credentials: 'include'
@@ -362,7 +370,10 @@
         async function extractActionItems(transcription) {
             try {
                 actionItemsStatus.textContent = 'Extracting action items...';
-                const extractResponse = await fetch('http://localhost:8000/extract-action-items', {
+
+                //Replace this below if your are using it for the production = "http://localhost:8000/extract-action-items'"
+                //Replace this below if you are using it for the deployement = `${APP_URL}/extract-action-items`
+                const extractResponse = await fetch(`${APP_URL}/extract-action-items`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -392,7 +403,10 @@
 
         async function fetchJsonFiles() {
             try {
-                const jsonResponse = await fetch('http://localhost:8000/get-json-files', {
+
+                //Replace this below if your are using it for the production = "http://localhost:8000/get-json-files"
+                //Replace this below if you are using it for the deployement = `${APP_URL}/get-json-files`
+                const jsonResponse = await fetch(`${APP_URL}/get-json-files`, {
                     method: 'GET',
                     credentials: 'include'
                 });
@@ -531,7 +545,10 @@
 
                 const payload = { file_type: fileType, index, item };
                 const endpoint = action === 'accept' ? '/accept-action-item' : '/reject-action-item';
-                const url = `http://localhost:8000${endpoint}`; // Replace with deployed Flask URL
+
+                //Replace this below if your are using it for the production = "http://localhost:8000${endpoint}"
+                //Replace this below if you are using it for the deployement = `${APP_URL}${endpoint}`
+                const url = `${APP_URL}${endpoint}`; // Replace with deployed Flask URL
 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -642,7 +659,10 @@
 
             try {
                 spinner.style.display = 'block';
-                const response = await fetch('http://localhost:8000/update-json-file', {
+    
+                //Replace this below if your are using it for the production = "http://localhost:8000/update-json-file"
+                //Replace this below if you are using it for the deployement = `${APP_URL}/update-json-file`
+                const response = await fetch(`${APP_URL}/update-json-file`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

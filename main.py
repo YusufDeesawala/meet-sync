@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, render_template, session
+from flask import Flask, request, jsonify, send_from_directory, render_template, session, flash , redirect , url_for
 from flask_cors import CORS
 import os
 import json
@@ -19,6 +19,7 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your-secure-secret-key')
 app.config['SESSION_TYPE'] = 'filesystem'  
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
+BASE_URL = os.getenv('BASE_URL')
 
 CORS(app, resources={
     r"/*": {
@@ -416,6 +417,8 @@ def reject_action_item():
 
 @app.route('/accept-action-item', methods=['POST'])
 def accept_action_item():
+    global auth_token
+
     try:
         if not request.is_json:
             return jsonify({'error': 'Request must contain JSON data'}), 400
@@ -436,7 +439,7 @@ def accept_action_item():
         if not backend_url:
             return jsonify({'error': f'No backend URL configured for {file_type}'}), 500
 
-        headers = {'Content-Type': 'application/json', 'auth-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjdmZmU1MjJmYWMzYWVhODEyN2NmODAzIn0sImlhdCI6MTc0NDg4MjI4Mn0.Xr6SBr2YzPjiFq9KDnu2UxEiU4utnO4sZEdfDYe83hw'}
+        headers = {'Content-Type': 'application/json', 'auth-token': session['token']}
 
         response = requests.post(backend_url, json=item, headers=headers)
 
@@ -444,22 +447,38 @@ def accept_action_item():
             return jsonify({'message': 'Item accepted successfully'}), 200
         else:
             error_msg = response.text or 'Unknown error'
-            if backend_type == 'note' and response.status_code == 401:
-                auth_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjdmZmU1MjJmYWMzYWVhODEyN2NmODAzIn0sImlhdCI6MTc0NDg4MjI4Mn0.Xr6SBr2YzPjiFq9KDnu2UxEiU4utnO4sZEdfDYe83hw'
-                if auth_token:
-                    headers['auth-token'] = f'{auth_token}'
-                    retry_response = requests.post(backend_url, json=item, headers=headers)
-                    if retry_response.status_code == 200:
-                        return jsonify({'message': 'Item accepted successfully'}), 200
-                    error_msg = retry_response.text or 'Unknown error'
+
             return jsonify({'error': f'Failed to accept item: {error_msg}'}), response.status_code
 
     except Exception as e:
         return jsonify({'error': f'Error accepting action item: {str(e)}'}), 500
 
-@app.route('/')
-def root():
+@app.route('/home')
+def home():
+    if 'token' not in session:
+        return redirect(url_for('login'))
+    
     return render_template('index.html')
 
+
+# Login 
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        payload = {
+            "email": request.form['email'],
+            "password": request.form['password']
+        }
+        res = requests.post(f"{BASE_URL}/api/auth/login", json=payload)
+        if res.status_code == 200:
+            token = res.json().get("authToken")
+            session['token'] = token
+            flash("Login successful!", "success")
+            # Pass token to template for localStorage storage
+            return render_template('login.html', token=token)
+        flash("Login failed!", "danger")
+    return render_template('login.html')
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    port = int(os.getenv("PORT", 5000))  
+    app.run(debug=True, host='0.0.0.0', port=port)  

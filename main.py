@@ -227,8 +227,8 @@ def extract_action_items():
                                 - For type **email**, always include `recipient`, `subject`, and `body`.
                                 - For type **to_do**, include a short `title` and a longer `content` (used as the task description).
                                 - For type **calendar_event**, only include `type` and `content`.
-                                -For type **to_do**, include a short `title` and a longer `content` (used as the task description). The `title` is required.
-                                -For type **web_search** only include `content`.
+                                - For type **to_do**, include a short `title` and a longer `content` (used as the task description). The `title` is required.
+                                -   For type **web_search** only include `content`.
                                 - Respond with a JSON array of action items only.
                                 '''
                 },

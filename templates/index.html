@@ -772,12 +772,12 @@
         }
 
         .visualizer-bar {
-    width: 5px;
-    height: 5px;
-    background: linear-gradient(to bottom, #A5B4FC, #6366F1);
-    border-radius: 2px;
-    transition: height 0.2s ease;
-}
+            width: 5px;
+            height: 5px;
+            background: linear-gradient(to bottom, #A5B4FC, #6366F1);
+            border-radius: 2px;
+            transition: height 0.2s ease;
+        }
 
         .pulse {
             animation: pulse-animation 2s infinite;
@@ -880,12 +880,14 @@
                 width: 100%;
                 justify-content: center;
             }
+
             .visualizer {
-        height: 40px;
-    }
-    .visualizer-bar {
-        width: 3px;
-    }
+                height: 40px;
+            }
+
+            .visualizer-bar {
+                width: 3px;
+            }
         }
 
         footer {
@@ -1029,27 +1031,27 @@
 
             // Create audio visualizer
             function createVisualizer() {
-    const visualizer = document.getElementById('visualizer');
-    visualizer.innerHTML = ''; // Clear existing bars
-    for (let i = 0; i < 20; i++) { // Create 20 bars for a fuller effect
-        const bar = document.createElement('div');
-        bar.className = 'visualizer-bar';
-        visualizer.appendChild(bar);
-    }
-    visualizer.style.display = 'flex';
-}
+                const visualizer = document.getElementById('visualizer');
+                visualizer.innerHTML = ''; // Clear existing bars
+                for (let i = 0; i < 20; i++) { // Create 20 bars for a fuller effect
+                    const bar = document.createElement('div');
+                    bar.className = 'visualizer-bar';
+                    visualizer.appendChild(bar);
+                }
+                visualizer.style.display = 'flex';
+            }
 
-function updateVisualizer() {
-    const bars = document.querySelectorAll('.visualizer-bar');
-    const bufferLength = analyzer.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    analyzer.getByteFrequencyData(dataArray);
+            function updateVisualizer() {
+                const bars = document.querySelectorAll('.visualizer-bar');
+                const bufferLength = analyzer.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                analyzer.getByteFrequencyData(dataArray);
 
-    bars.forEach((bar, index) => {
-        const height = dataArray[index * 2] / 255 * 50; // Scale height based on audio (0-50px)
-        bar.style.height = `${height}px`;
-    });
-}
+                bars.forEach((bar, index) => {
+                    const height = dataArray[index * 2] / 255 * 50; // Scale height based on audio (0-50px)
+                    bar.style.height = `${height}px`;
+                });
+            }
 
             // Show toast notification
             function showToast(message, type = 'success') {
@@ -1198,8 +1200,8 @@ function updateVisualizer() {
                     const formData = new FormData();
                     formData.append('file', audioBlob, 'recording.webm');
 
-                //Replace this below if your are using it for the production = "http://localhost:8000/transcribe"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/transcribe`
+                    //Replace this below if your are using it for the production = "http://localhost:8000/transcribe"
+                    //Replace this below if you are using it for the deployement = `${APP_URL}/transcribe`
                     const response = await fetch(`${APP_URL}/transcribe`, {
                         method: 'POST',
                         body: formData,
@@ -1241,8 +1243,8 @@ function updateVisualizer() {
                     updateStatus(actionItemsStatus, 'Extracting action items...', 'fa-cog fa-spin', '#f59e0b');
                     showLoader('Analyzing transcription and extracting action items...');
 
-                //Replace this below if your are using it for the production = "http://localhost:8000/extract-action-items'"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/extract-action-items`                    
+                    //Replace this below if your are using it for the production = "http://localhost:8000/extract-action-items'"
+                    //Replace this below if you are using it for the deployement = `${APP_URL}/extract-action-items`                    
                     const extractResponse = await fetch(`${APP_URL}/extract-action-items`, {
                         method: 'POST',
                         headers: {
@@ -1273,8 +1275,8 @@ function updateVisualizer() {
             // Fetch JSON files with action items
             async function fetchJsonFiles() {
                 try {
-                //Replace this below if your are using it for the production = "http://localhost:8000/get-json-files"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/get-json-files`
+                    //Replace this below if your are using it for the production = "http://localhost:8000/get-json-files"
+                    //Replace this below if you are using it for the deployement = `${APP_URL}/get-json-files`
                     const jsonResponse = await fetch(`${APP_URL}/get-json-files`, {
                         method: 'GET',
                         credentials: 'include'
@@ -1479,8 +1481,8 @@ function updateVisualizer() {
                     const payload = { file_type: fileType, index, item };
                     const endpoint = action === 'accept' ? '/accept-action-item' : '/reject-action-item';
 
-                //Replace this below if your are using it for the production = "http://localhost:8000${endpoint}"
-                //Replace this below if you are using it for the deployement = `${APP_URL}${endpoint}`
+                    //Replace this below if your are using it for the production = "http://localhost:8000${endpoint}"
+                    //Replace this below if you are using it for the deployement = `${APP_URL}${endpoint}`
                     const url = `${APP_URL}${endpoint}`;
 
                     const response = await fetch(url, {
@@ -1557,11 +1559,16 @@ function updateVisualizer() {
                 } else if (type === 'to_do') {
                     editFields.innerHTML = `
                         <div class="form-group">
-                            <label class="form-label" for="content">Task</label>
-                            <textarea class="form-control" id="content" name="content">${item.content || ''}</textarea>
+                            <label class="form-label" for="title">Type</label>
+                            <input type="text" class="form-control" id="title" name="title" value="${item.title || 'to_do'}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="description">Task</label>
+                            <textarea class="form-control" id="description" name="description">${item.description || ''}</textarea>
                         </div>
                     `;
-                } else if (type === 'calendar_event') {
+                }
+                else if (type === 'calendar_event') {
                     editFields.innerHTML = `
                         <div class="form-group">
                             <label class="form-label" for="content">Event</label>
@@ -1605,9 +1612,10 @@ function updateVisualizer() {
                 } else if (type === 'to_do') {
                     updatedItem = {
                         title: document.getElementById('title').value,
-                        description: document.getElementById('content').value
+                        description: document.getElementById('description').value
                     };
-                } else if (type === 'calendar_event') {
+                }
+                else if (type === 'calendar_event') {
                     updatedItem = {
                         type: 'calendar_event',
                         content: document.getElementById('content').value
@@ -1616,8 +1624,8 @@ function updateVisualizer() {
 
                 try {
                     showLoader('Updating action item...');
-                //Replace this below if your are using it for the production = "http://localhost:8000/update-json-file"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/update-json-file`
+                    //Replace this below if your are using it for the production = "http://localhost:8000/update-json-file"
+                    //Replace this below if you are using it for the deployement = `${APP_URL}/update-json-file`
                     const response = await fetch(`${APP_URL}/update-json-file`, {
                         method: 'POST',
                         headers: {
@@ -1700,4 +1708,5 @@ function updateVisualizer() {
         });
     </script>
 </body>
+
 </html>

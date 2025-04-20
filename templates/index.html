@@ -774,7 +774,7 @@
         .visualizer-bar {
             width: 5px;
             height: 5px;
-            background-color: var(--primary);
+            background: linear-gradient(to bottom, #A5B4FC, #6366F1);
             border-radius: 2px;
             transition: height 0.2s ease;
         }
@@ -879,6 +879,14 @@
             .btn {
                 width: 100%;
                 justify-content: center;
+            }
+
+            .visualizer {
+                height: 40px;
+            }
+
+            .visualizer-bar {
+                width: 3px;
             }
         }
 
@@ -1023,31 +1031,26 @@
 
             // Create audio visualizer
             function createVisualizer() {
-                visualizer.innerHTML = '';
-                visualizer.style.display = 'flex';
-
-                for (let i = 0; i < 20; i++) {
+                const visualizer = document.getElementById('visualizer');
+                visualizer.innerHTML = ''; // Clear existing bars
+                for (let i = 0; i < 20; i++) { // Create 20 bars for a fuller effect
                     const bar = document.createElement('div');
                     bar.className = 'visualizer-bar';
                     visualizer.appendChild(bar);
-                    visualizerBars.push(bar);
                 }
+                visualizer.style.display = 'flex';
             }
 
-            // Update visualizer with audio data
             function updateVisualizer() {
-                if (!analyzer) return;
-
-                const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+                const bars = document.querySelectorAll('.visualizer-bar');
+                const bufferLength = analyzer.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
                 analyzer.getByteFrequencyData(dataArray);
 
-                const step = Math.floor(dataArray.length / visualizerBars.length);
-
-                for (let i = 0; i < visualizerBars.length; i++) {
-                    const value = dataArray[i * step];
-                    const height = Math.max(3, value / 2); // Scale the height
-                    visualizerBars[i].style.height = `${height}px`;
-                }
+                bars.forEach((bar, index) => {
+                    const height = dataArray[index * 2] / 255 * 50; // Scale height based on audio (0-50px)
+                    bar.style.height = `${height}px`;
+                });
             }
 
             // Show toast notification
@@ -1197,8 +1200,8 @@
                     const formData = new FormData();
                     formData.append('file', audioBlob, 'recording.webm');
 
-                //Replace this below if your are using it for the production = "http://localhost:8000/transcribe"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/transcribe`
+                    //Replace this below if your are using it for the production = "http://localhost:8000/transcribe"
+                    //Replace this below if you are using it for the deployement = `${APP_URL}/transcribe`
                     const response = await fetch(`${APP_URL}/transcribe`, {
                         method: 'POST',
                         body: formData,
@@ -1240,8 +1243,8 @@
                     updateStatus(actionItemsStatus, 'Extracting action items...', 'fa-cog fa-spin', '#f59e0b');
                     showLoader('Analyzing transcription and extracting action items...');
 
-                //Replace this below if your are using it for the production = "http://localhost:8000/extract-action-items'"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/extract-action-items`                    
+                    //Replace this below if your are using it for the production = "http://localhost:8000/extract-action-items'"
+                    //Replace this below if you are using it for the deployement = `${APP_URL}/extract-action-items`                    
                     const extractResponse = await fetch(`${APP_URL}/extract-action-items`, {
                         method: 'POST',
                         headers: {
@@ -1272,8 +1275,8 @@
             // Fetch JSON files with action items
             async function fetchJsonFiles() {
                 try {
-                //Replace this below if your are using it for the production = "http://localhost:8000/get-json-files"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/get-json-files`
+                    //Replace this below if your are using it for the production = "http://localhost:8000/get-json-files"
+                    //Replace this below if you are using it for the deployement = `${APP_URL}/get-json-files`
                     const jsonResponse = await fetch(`${APP_URL}/get-json-files`, {
                         method: 'GET',
                         credentials: 'include'
@@ -1478,8 +1481,8 @@
                     const payload = { file_type: fileType, index, item };
                     const endpoint = action === 'accept' ? '/accept-action-item' : '/reject-action-item';
 
-                //Replace this below if your are using it for the production = "http://localhost:8000${endpoint}"
-                //Replace this below if you are using it for the deployement = `${APP_URL}${endpoint}`
+                    //Replace this below if your are using it for the production = "http://localhost:8000${endpoint}"
+                    //Replace this below if you are using it for the deployement = `${APP_URL}${endpoint}`
                     const url = `${APP_URL}${endpoint}`;
 
                     const response = await fetch(url, {
@@ -1616,8 +1619,8 @@
 
                 try {
                     showLoader('Updating action item...');
-                //Replace this below if your are using it for the production = "http://localhost:8000/update-json-file"
-                //Replace this below if you are using it for the deployement = `${APP_URL}/update-json-file`
+                    //Replace this below if your are using it for the production = "http://localhost:8000/update-json-file"
+                    //Replace this below if you are using it for the deployement = `${APP_URL}/update-json-file`
                     const response = await fetch(`${APP_URL}/update-json-file`, {
                         method: 'POST',
                         headers: {
@@ -1700,4 +1703,5 @@
         });
     </script>
 </body>
+
 </html>

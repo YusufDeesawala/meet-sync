@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
+
 
 <head>
     <meta charset="UTF-8">
@@ -9,6 +10,136 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="../static/meeting.ico">
     <style>
+        /* Add these CSS variables for dark mode right after your existing :root variables */
+        [data-theme="dark"] {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #22c55e;
+            --secondary-dark: #16a34a;
+            --accent: #f59e0b;
+            --accent-dark: #d97706;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --light: #1f2937;
+            --dark: #f9fafb;
+            --gray: #9ca3af;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --gradient: linear-gradient(135deg, #6366f1, #818cf8);
+        }
+
+        [data-theme="dark"] body {
+            background-color: #111827;
+            color: #f9fafb;
+        }
+
+        [data-theme="dark"] .panel,
+        [data-theme="dark"] .modal-content {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+
+        [data-theme="dark"] .panel-header {
+            background: #374151;
+            border-color: #4b5563;
+        }
+
+        [data-theme="dark"] .item-card {
+            background: #2d3748;
+        }
+
+        [data-theme="dark"] .item-header {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="dark"] .form-control {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: #f9fafb;
+        }
+
+        [data-theme="dark"] .edit-btn {
+            background: #4b5563;
+            color: #f9fafb;
+        }
+
+        [data-theme="dark"] .edit-btn:hover {
+            background: #6b7280;
+        }
+
+        [data-theme="dark"] .speech-bubble {
+            background: #3730a3;
+            color: #f9fafb;
+        }
+
+        [data-theme="dark"] .speech-bubble:after {
+            border-bottom-color: #3730a3;
+        }
+
+        [data-theme="dark"] .badge-primary {
+            background: #3730a3;
+            color: #e0e7ff;
+        }
+
+        /* Theme toggle switch styles */
+        .theme-switch-container {
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+            margin: 0 10px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ffffff;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: var(--primary);
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #374151;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(30px);
+            background-color: #f9fafb;
+        }
+
+        .theme-icon {
+            color: white;
+            font-size: 1.2rem;
+        }
+
         :root {
             --primary: #4f46e5;
             --primary-dark: #4338ca;
@@ -641,12 +772,12 @@
         }
 
         .visualizer-bar {
-            width: 5px;
-            height: 5px;
-            background-color: var(--primary);
-            border-radius: 2px;
-            transition: height 0.2s ease;
-        }
+    width: 5px;
+    height: 5px;
+    background: linear-gradient(to bottom, #A5B4FC, #6366F1);
+    border-radius: 2px;
+    transition: height 0.2s ease;
+}
 
         .pulse {
             animation: pulse-animation 2s infinite;
@@ -749,6 +880,12 @@
                 width: 100%;
                 justify-content: center;
             }
+            .visualizer {
+        height: 40px;
+    }
+    .visualizer-bar {
+        width: 3px;
+    }
         }
 
         footer {
@@ -768,6 +905,14 @@
                 <i class="fas fa-microphone-alt logo-icon"></i>
                 AI Meeting Assistant
             </h1>
+        </div>
+        <div class="theme-switch-container">
+            <i class="fas fa-sun theme-icon"></i>
+            <label class="theme-switch">
+                <input type="checkbox" id="themeToggle">
+                <span class="slider"></span>
+            </label>
+            <i class="fas fa-moon theme-icon"></i>
         </div>
     </header>
 
@@ -884,32 +1029,27 @@
 
             // Create audio visualizer
             function createVisualizer() {
-                visualizer.innerHTML = '';
-                visualizer.style.display = 'flex';
+    const visualizer = document.getElementById('visualizer');
+    visualizer.innerHTML = ''; // Clear existing bars
+    for (let i = 0; i < 20; i++) { // Create 20 bars for a fuller effect
+        const bar = document.createElement('div');
+        bar.className = 'visualizer-bar';
+        visualizer.appendChild(bar);
+    }
+    visualizer.style.display = 'flex';
+}
 
-                for (let i = 0; i < 20; i++) {
-                    const bar = document.createElement('div');
-                    bar.className = 'visualizer-bar';
-                    visualizer.appendChild(bar);
-                    visualizerBars.push(bar);
-                }
-            }
+function updateVisualizer() {
+    const bars = document.querySelectorAll('.visualizer-bar');
+    const bufferLength = analyzer.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyzer.getByteFrequencyData(dataArray);
 
-            // Update visualizer with audio data
-            function updateVisualizer() {
-                if (!analyzer) return;
-
-                const dataArray = new Uint8Array(analyzer.frequencyBinCount);
-                analyzer.getByteFrequencyData(dataArray);
-
-                const step = Math.floor(dataArray.length / visualizerBars.length);
-
-                for (let i = 0; i < visualizerBars.length; i++) {
-                    const value = dataArray[i * step];
-                    const height = Math.max(3, value / 2); // Scale the height
-                    visualizerBars[i].style.height = `${height}px`;
-                }
-            }
+    bars.forEach((bar, index) => {
+        const height = dataArray[index * 2] / 255 * 50; // Scale height based on audio (0-50px)
+        bar.style.height = `${height}px`;
+    });
+}
 
             // Show toast notification
             function showToast(message, type = 'success') {
@@ -1454,8 +1594,7 @@
                     };
                 } else if (type === 'web_search') {
                     updatedItem = {
-                        type: 'web_search',
-                        content: document.getElementById('content').value
+                        title: document.getElementById('content').value
                     };
                 } else if (type === 'note') {
                     updatedItem = {
@@ -1465,8 +1604,8 @@
                     };
                 } else if (type === 'to_do') {
                     updatedItem = {
-                        type: 'to_do',
-                        content: document.getElementById('content').value
+                        title: document.getElementById('title').value,
+                        description: document.getElementById('content').value
                     };
                 } else if (type === 'calendar_event') {
                     updatedItem = {
@@ -1531,6 +1670,29 @@
             // Close toast notification
             toastClose.addEventListener('click', () => {
                 toast.classList.remove('visible');
+            });
+            // Theme switcher functionality
+            const themeToggle = document.getElementById('themeToggle');
+            const htmlElement = document.documentElement;
+
+            // Check if user has a saved preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                htmlElement.setAttribute('data-theme', savedTheme);
+                if (savedTheme === 'dark') {
+                    themeToggle.checked = true;
+                }
+            }
+
+            // Toggle theme when switch is clicked
+            themeToggle.addEventListener('change', () => {
+                if (themeToggle.checked) {
+                    htmlElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    htmlElement.setAttribute('data-theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                }
             });
 
             // Initialize the app

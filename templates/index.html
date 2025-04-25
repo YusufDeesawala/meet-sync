@@ -300,6 +300,22 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-accent:hover:not(:disabled) {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-accent:active:not(:disabled) {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
         .btn:disabled {
             background-color: var(--gray);
             cursor: not-allowed;
@@ -920,6 +936,9 @@
 
     <div class="container">
         <div class="controls">
+            <a href="https://meet-sync-backend-1.vercel.app/login" class="btn btn-accent" id="notesBtn">
+                <i class="fas fa-sticky-note"></i> Notes
+            </a>
             <button id="startBtn" class="btn btn-primary">
                 <i class="fas fa-play"></i> Start Recording
             </button>

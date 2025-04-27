@@ -12,8 +12,8 @@ import time
 import requests
 load_dotenv()
 app = Flask(__name__, template_folder='templates')
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your-secure-secret-key')  
-app.config['SESSION_TYPE'] = 'filesystem'  
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your-secure-secret-key')
+app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 BASE_URL = os.getenv('BASE_URL')
@@ -21,12 +21,13 @@ BASE_URL = os.getenv('BASE_URL')
 
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:8080", "http://localhost"],
+        "origins": ["http://localhost:8080", "http://localhost", "https://meet-sync-backend-1.vercel.app"],
         "allow_headers": "*",
         "methods": ["GET", "POST", "OPTIONS"],
-        "supports_credentials": True  
+        "supports_credentials": True
     }
 })
+
 app.config['STATIC_FOLDER'] = 'static'
 app.config['UPLOAD_FOLDER'] = 'temp'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -432,9 +433,8 @@ def accept_action_item():
 def home():
     if 'token' not in session:
         return redirect(url_for('login'))
-    
-    app_url = os.getenv('APP_URL', os.getenv('APP_URL'))
-    return render_template('index.html', app_url= app_url)
+    app_url = os.getenv('APP_URL', 'https://your-default-url')
+    return render_template('index.html', app_url=app_url, token=session['token'])
 
 # Login route
 @app.route('/', methods=['GET', 'POST'])
@@ -448,9 +448,7 @@ def login():
         if res.status_code == 200:
             token = res.json().get("authToken")
             session['token'] = token
-            #flash("Login successful!", "success")
-            # Pass token to template for localStorage storage
-            return render_template('index.html', token=token)
+            return redirect(url_for('home'))  # Corrected: Redirect to /home route
         flash("Login failed!", "danger")
     return render_template('login.html')
 

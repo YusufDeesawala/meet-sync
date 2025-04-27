@@ -936,7 +936,7 @@
 
     <div class="container">
         <div class="controls">
-            <a href="https://meet-sync-backend-1.vercel.app/login" class="btn btn-accent" id="notesBtn">
+            <a href="https://meet-sync-backend-1.vercel.app/login" class="btn btn-accent" id="notesBtn" target="_blank">
                 <i class="fas fa-sticky-note"></i> Notes
             </a>
             <button id="startBtn" class="btn btn-primary">
@@ -1017,6 +1017,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const APP_TOKEN = "{{ token | safe }}";
+            if (APP_TOKEN) {
+                localStorage.setItem('authToken', APP_TOKEN);
+            }
             // UI Elements
             const startBtn = document.getElementById('startBtn');
             const stopBtn = document.getElementById('stopBtn');
@@ -1037,6 +1041,17 @@
             const toastIcon = document.getElementById('toastIcon');
             const toastClose = document.getElementById('toastClose');
             const visualizer = document.getElementById('visualizer');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            if (token) {
+                localStorage.setItem('authToken', token);
+            }
+            const notesBtn = document.getElementById('notesBtn');
+            const authToken = localStorage.getItem('authToken');
+            if (authToken) {
+                notesBtn.href = `https://meet-sync-backend-1.vercel.app/login?token=${encodeURIComponent(authToken)}`;
+            }
 
             // Audio recording variables
             let mediaRecorder;

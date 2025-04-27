@@ -114,7 +114,7 @@ function WebSearch() {
   };
 
   return (
-    <div className="notes-container">
+    <div className="notes-container" style={{ height: "calc(100vh - 70px)", overflowY: "auto", padding: "1rem" }}>
       <div className="notes-header">
         <h2>Your Web Searches</h2>
         <div className="filter-controls">

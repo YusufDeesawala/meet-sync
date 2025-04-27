@@ -15,10 +15,8 @@ import Home from './components/Home';
 import WebSearch from './components/WebSearch';
 import AddWebSearch from './components/AddWebSearch';
 import WebSearchState from './context/WebSearchState';
-
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) setIsAuthenticated(true);
@@ -35,7 +33,7 @@ function App() {
         <WebSearchState>
         <Router>
           <div className="App">
-            <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+            <Header isAuthenticated={isAuthenticated} onLogout={handleLogout}/>
 
             <AnimatePresence mode="wait">
               <motion.div
@@ -90,7 +88,7 @@ function App() {
                       path="/websearch" 
                       element={isAuthenticated ? <WebSearch /> : <Navigate to="/login" />} 
                     />
-                  <Route path='/addtodo' element={isAuthenticated? <AddTodo/>:<Navigate to={"/login"}/>}/>
+                  <Route path='/addtodo' element={isAuthenticated? <AddTodo/>:<Navigate to="/login"/>}/>
                   <Route path='/todo' element={isAuthenticated ? <Todo/>: <Navigate to="/login"/>}/>
                 </Routes>
               </motion.div>

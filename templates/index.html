@@ -1408,9 +1408,12 @@
 
                 const content = document.createElement('div');
                 content.className = 'item-content';
+                // Display content based on item type
                 content.textContent = type === 'email' ? item.body :
                     type === 'note' ? item.description :
-                        item.content;
+                        type === 'web_search' ? item.title :
+                            type === 'to_do' ? item.description :
+                                item.content; // Handles calendar_event
                 itemCard.appendChild(content);
 
                 const details = document.createElement('div');
@@ -1540,60 +1543,59 @@
                 // Create appropriate form fields based on item type
                 if (type === 'email') {
                     editFields.innerHTML = `
-                        <div class="form-group">
-                            <label class="form-label" for="recipient">Recipient</label>
-                            <input type="text" class="form-control" id="recipient" name="recipient" value="${item.recipient || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="subject">Subject</label>
-                            <input type="text" class="form-control" id="subject" name="subject" value="${item.subject || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="body">Body</label>
-                            <textarea class="form-control" id="body" name="body">${item.body || ''}</textarea>
-                        </div>
-                    `;
+            <div class="form-group">
+                <label class="form-label" for="recipient">Recipient</label>
+                <input type="text" class="form-control" id="recipient" name="recipient" value="${item.recipient || ''}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="subject">Subject</label>
+                <input type="text" class="form-control" id="subject" name="subject" value="${item.subject || ''}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="body">Body</label>
+                <textarea class="form-control" id="body" name="body">${item.body || ''}</textarea>
+            </div>
+        `;
                 } else if (type === 'web_search') {
                     editFields.innerHTML = `
-                        <div class="form-group">
-                            <label class="form-label" for="content">Search Query</label>
-                            <textarea class="form-control" id="content" name="content">${item.content || ''}</textarea>
-                        </div>
-                    `;
+            <div class="form-group">
+                <label class="form-label" for="title">Search Query</label>
+                <textarea class="form-control" id="title" name="title">${item.title || ''}</textarea>
+            </div>
+        `;
                 } else if (type === 'note') {
                     editFields.innerHTML = `
-                        <div class="form-group">
-                            <label class="form-label" for="title">Title</label>
-                            <input type="text" class="form-control" id="title" name="title" value="${item.title || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="description">Description</label>
-                            <textarea class="form-control" id="description" name="description">${item.description || ''}</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="tag">Tag</label>
-                            <input type="text" class="form-control" id="tag" name="tag" value="${item.tag || ''}">
-                        </div>
-                    `;
+            <div class="form-group">
+                <label class="form-label" for="title">Title</label>
+                <input type="text" class="form-control" id="title" name="title" value="${item.title || ''}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-control" id="description" name="description">${item.description || ''}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="tag">Tag</label>
+                <input type="text" class="form-control" id="tag" name="tag" value="${item.tag || ''}">
+            </div>
+        `;
                 } else if (type === 'to_do') {
                     editFields.innerHTML = `
-                        <div class="form-group">
-                            <label class="form-label" for="title">Type</label>
-                            <input type="text" class="form-control" id="title" name="title" value="${item.title || 'to_do'}" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="description">Task</label>
-                            <textarea class="form-control" id="description" name="description">${item.description || ''}</textarea>
-                        </div>
-                    `;
-                }
-                else if (type === 'calendar_event') {
+            <div class="form-group">
+                <label class="form-label" for="title">Title</label>
+                <input type="text" class="form-control" id="title" name="title" value="${item.title || 'To-Do Item'}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="description">Task</label>
+                <textarea class="form-control" id="description" name="description">${item.description || ''}</textarea>
+            </div>
+        `;
+                } else if (type === 'calendar_event') {
                     editFields.innerHTML = `
-                        <div class="form-group">
-                            <label class="form-label" for="content">Event</label>
-                            <textarea class="form-control" id="content" name="content">${item.content || ''}</textarea>
-                        </div>
-                    `;
+            <div class="form-group">
+                <label class="form-label" for="content">Event</label>
+                <textarea class="form-control" id="content" name="content">${item.content || ''}</textarea>
+            </div>
+        `;
                 }
 
                 // Show modal with animation
@@ -1620,7 +1622,7 @@
                     };
                 } else if (type === 'web_search') {
                     updatedItem = {
-                        title: document.getElementById('content').value
+                        title: document.getElementById('title').value
                     };
                 } else if (type === 'note') {
                     updatedItem = {
@@ -1633,8 +1635,7 @@
                         title: document.getElementById('title').value,
                         description: document.getElementById('description').value
                     };
-                }
-                else if (type === 'calendar_event') {
+                } else if (type === 'calendar_event') {
                     updatedItem = {
                         type: 'calendar_event',
                         content: document.getElementById('content').value
@@ -1643,8 +1644,6 @@
 
                 try {
                     showLoader('Updating action item...');
-                    //Replace this below if your are using it for the production = "http://localhost:8000/update-json-file"
-                    //Replace this below if you are using it for the deployement = `${APP_URL}/update-json-file`
                     const response = await fetch(`${APP_URL}/update-json-file`, {
                         method: 'POST',
                         headers: {

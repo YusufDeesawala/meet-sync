@@ -109,7 +109,10 @@ function Notes() {
     visible: { opacity: 1, y: 0 }
   };
   return (
-    <div className="notes-container">
+    <>
+    
+    <div className="notes-container"  style={{ height: "calc(100vh - 70px)", overflowY: "auto", padding: "1rem" }}>
+      
       <div className="notes-header">
         <h2>Your Notes</h2>
         <div className="filter-controls">
@@ -430,6 +433,8 @@ function Notes() {
         )}
       </AnimatePresence>
     </div>
+    <div/>
+    </>
   );
 }
 

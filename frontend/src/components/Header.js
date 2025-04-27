@@ -21,7 +21,7 @@ function Header({ isAuthenticated, onLogout }) {
 
 
         {isAuthenticated ? (
-          <nav className="nav-menu">
+                  <nav className="nav-menu">
             <Link to="/notes" className={location.pathname === "/notes" ? "active" : ""}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 My Notes

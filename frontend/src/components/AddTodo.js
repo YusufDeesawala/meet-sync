@@ -54,6 +54,7 @@ function AddTodo() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
+      style={{ height: "calc(100vh - 70px)", overflowY: "auto", padding: "1rem" }}
     >
       <motion.div
         className="add-note-card"

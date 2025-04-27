@@ -93,7 +93,7 @@ function Todo() {
   };
 
   return (
-    <div className="todos-container">
+    <div className="todos-container" style={{ height: "calc(100vh - 70px)", overflowY: "auto", padding: "1rem" }}>
       <div className="todos-header">
         <h2>Your Todos</h2>
         <div className="filter-controls">

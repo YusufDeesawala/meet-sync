@@ -1,15 +1,12 @@
 
----
 
 # Flask App with Email and Web Scraping 🚀
 
 This Flask app provides two key features:
 1. **Extract Data from Web** - Search and scrape content from the web.
-2. **Send Email** - Send emails using Gmail's SMTP server.
+2. **Send Email** - Send emails using SendGrid's API.
 
 This version is the **latest** release of **Routes_testing**, and it's designed to automatically search for information on Google and send follow-up emails.
-
-
 
 The service is live at = [Link](https://meet-sync-backend-2.onrender.com/)
 
@@ -87,28 +84,27 @@ You must have 2FA enabled on your Gmail account. Then, create an **App Password*
 ## 📧 Send Email
 
 ### ✅ Workflow
-The `/email` endpoint sends emails based on the provided input. Here's the process:
-1. The user sends a **POST** request with the email's details (recipient, subject, body).
-2. The app uses Gmail’s SMTP server to send the email securely.
+The `/email` endpoint sends emails using SendGrid's API based on the provided input. Here's the process:
+1. The user sends a **POST** request with the email details (from_email, recipient, subject, body).
+2. The app uses the SendGrid API to send the email, with the "From" address dynamically set to the provided `from_email`.
+3. The response indicates success or failure, including detailed error messages if applicable.
 
 ### 📩 Sample Input
 **POST request to**: `/email`
 
 ```json
-[
-  {
-    "type": "email",
-    "recipient": "client@example.com",
-    "subject": "Follow-up on Q2 Meeting",
-    "body": "Dear Client,\n\nAs discussed in our recent meeting, please find the summary of Q2 action items..."
-  }
-]
+{
+  "from_email": "yusufdeesawala72@gmail.com",
+  "recipient": "mustafa_23aia57@kgkite.ac.in",
+  "subject": "Meeting Notes for Mustafa - April 2025",
+  "body": "Hi Mustafa,\n\nI hope you're doing well! I'm sharing some notes from our recent meeting. Let me know if you have any questions.\n\nBest regards,\nYusuf"
+}
 ```
 
-- **type**: Should always be `email`.
-- **recipient**: The email address of the recipient.
-- **subject**: The subject of the email.
-- **body**: The content of the email.
+- **from_email** (required): The sender's email address (must be verified in SendGrid).
+- **recipient** (required): The email address of the recipient.
+- **subject** (required): The subject of the email.
+- **body** (required): The content of the email.
 
 ### 💻 How to Test with Postman
 1. Open **Postman**.
@@ -131,44 +127,50 @@ You should receive a response like:
 }
 ```
 
-If there's an error (e.g., invalid credentials or missing fields), you will get a response like:
+If there's an error (e.g., invalid sender, API key issue, or missing fields), you will get a response like:
 
 ```json
 {
   "status": "error",
   "agent": "email",
-  "message": "Invalid credentials"
+  "message": "HTTP Error 403: Forbidden - The from email does not belong to a verified sender identity"
 }
 ```
 
 ### 🔧 Environment Variables Required (in .env file)
-To send emails using Gmail, make sure you have the following environment variables:
+To send emails using SendGrid, ensure you set the following environment variable:
 ```bash
-EMAIL_SENDER=youremail@gmail.com
-EMAIL_PASSWORD=your_app_password
+SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-**⚠️ For Gmail users:**
-- Ensure 2FA is enabled on your Gmail account.
-- Create an **App Password** here: [Google App Passwords](https://myaccount.google.com/apppasswords).
+**Setup Steps for SendGrid:**
+- Sign up at [SendGrid](https://sendgrid.com/).
+- Verify your sender email (e.g., `yusufdeesawala72@gmail.com`) in the SendGrid dashboard under "Settings" > "Sender Authentication."
+- Generate an API key with full access in "Settings" > "API Keys" and set it as `SENDGRID_API_KEY`.
+- No App Password or 2FA setup is required, as SendGrid handles authentication via the API key.
 
 ### 🧠 Behind the Scenes
-Here's a quick look at how the email is sent using the Gmail SMTP server:
+Here’s how the email is sent using SendGrid's API:
 
 ```python
 def handle_email(item):
     try:
-        msg = EmailMessage()
-        msg['Subject'] = item['subject']
-        msg['From'] = EMAIL_SENDER
-        msg['To'] = item['recipient']
-        msg.set_content(item['body'])
-
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login(EMAIL_SENDER, EMAIL_PASSWORD)
-            smtp.send_message(msg)
-
+        message = Mail(
+            from_email=item['from_email'],
+            to_emails=item['recipient'],
+            subject=item['subject'],
+            plain_text_content=item['body'],
+            html_content=f"<p>{item['body']}</p><br><p>Best regards,<br>{item['from_email']}</p>"
+        )
+        sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+        response = sg.send(message)
         return {"status": "success", "agent": "email", "message": "Email sent"}
     except Exception as e:
         return {"status": "error", "agent": "email", "message": str(e)}
 ```
+
+- The `from_email` is dynamically set to the value provided in the request (e.g., `yusufdeesawala72@gmail.com`).
+- SendGrid adds DKIM and SPF signatures to authenticate the email.
+- The API key authenticates the request, and the response status (e.g., 202) confirms successful delivery to SendGrid’s servers.
+
+---

@@ -1,12 +1,12 @@
 import os
-import smtplib
-from email.message import EmailMessage
 from flask import Flask, request, jsonify
 from googlesearch import search
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import re
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 load_dotenv()
 
@@ -35,6 +35,7 @@ def extract_data():
         result = list(search(title, num_results=1))
         url = result[0] if result else None
     except Exception as e:
+        print(f"[ERROR] Failed to search for title '{title}': {str(e)}")
         return jsonify({"error": "Failed to search for the title", "details": str(e)}), 500
 
     # Check if URL is valid, else use default message
@@ -59,6 +60,7 @@ def extract_data():
             if not content:
                 content = "There is no resource"
         except Exception as e:
+            print(f"[ERROR] Failed to scrape URL '{url}': {str(e)}")
             url = "There is no resource"
             content = "There is no resource"
 
@@ -70,25 +72,29 @@ def extract_data():
     }
 
     # Debugging: print the result_data before sending
-    print(f"Sending data to web_add: {result_data}")
+    print(f"[INFO] Sending data to web_add: {result_data}")
 
     # Send the result data to the web_add endpoint
-    web_add_url = 'https://meet-sync-backend.vercel.app/api/websearch/web_add'
+    web_add_url = f"{os.getenv('WEB_SEARCH')}/api/websearch/web_add"
     headers = {
         'Content-Type': 'application/json',
         'auth-token': auth_token
     }
 
-    response = requests.post(web_add_url, json=result_data, headers=headers)
-
-    if response.status_code == 201:
-        return jsonify(result_data), 200
-    else:
-        return jsonify({"error": "Failed to store result in the database", "details": response.json()}), 500
+    try:
+        response = requests.post(web_add_url, json=result_data, headers=headers)
+        if response.status_code == 201:
+            return jsonify(result_data), 200
+        else:
+            print(f"[ERROR] Failed to store result in database: {response.text}")
+            return jsonify({"error": "Failed to store result in the database", "details": response.json()}), 500
+    except Exception as e:
+        print(f"[ERROR] Failed to send data to web_add: {str(e)}")
+        return jsonify({"error": "Failed to store result in the database", "details": str(e)}), 500
 
 @app.route('/email', methods=['POST'])
 def handle_email():
-    # Get the input data for the email (expecting a single object)
+    # Get the input data for the email
     item = request.get_json()
 
     # Ensure the input is a dictionary and not empty
@@ -99,38 +105,39 @@ def handle_email():
     required_fields = ['from_email', 'recipient', 'subject', 'body']
     missing_fields = [field for field in required_fields if field not in item or not item[field]]
     if missing_fields:
+        print(f"[ERROR] Missing required fields: {missing_fields}")
         return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
 
     # Validate email addresses
     from_email = item['from_email']
     recipient = item['recipient']
     if not re.match(EMAIL_REGEX, from_email):
+        print(f"[ERROR] Invalid sender email: {from_email}")
         return jsonify({"error": "Invalid sender email address"}), 400
     if not re.match(EMAIL_REGEX, recipient):
+        print(f"[ERROR] Invalid recipient email: {recipient}")
         return jsonify({"error": "Invalid recipient email address"}), 400
 
+    # Send email using SendGrid
     try:
-        msg = EmailMessage()
-        msg['Subject'] = item['subject']
-        msg['From'] = from_email
-        msg['To'] = recipient
-        msg.set_content(item['body'])
+        message = Mail(
+            from_email=from_email,
+            to_emails=recipient,
+            subject=item['subject'],
+            plain_text_content=item['body']
+        )
 
-        # Note: This assumes the sender's email is a Gmail address and the app password is provided
-        # In a production environment, you should use a more secure method like OAuth2
-        smtp_password = os.getenv("EMAIL_PASSWORD")  # App-specific password for the sender's email
-        if not smtp_password:
-            return jsonify({"error": "SMTP password not configured"}), 500
-
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login(from_email, smtp_password)
-            smtp.send_message(msg)
-        
+        sg = SendGridAPIClient(os.getenv('SENDGRID_API_KEY'))
+        response = sg.send(message)
+        print(f"[INFO] Email sent successfully to {recipient}, status code: {response.status_code}")
         return jsonify({"status": "success", "agent": "email", "message": "Email sent"}), 200
-
     except Exception as e:
+        print(f"[ERROR] Failed to send email: {str(e)}")
         return jsonify({"status": "error", "agent": "email", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.getenv("PORT", 5000))  
-    app.run(debug=True, host='0.0.0.0', port=port)
+    port = int(os.getenv("PORT", 5000))
+    print(f"[INFO] Starting Flask app on port {port}")
+    if not os.getenv('SENDGRID_API_KEY'):
+        print("[ERROR] SENDGRID_API_KEY environment variable not set")
+    app.run(debug=False, host='0.0.0.0', port=port)

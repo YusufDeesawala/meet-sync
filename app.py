@@ -6,16 +6,14 @@ from googlesearch import search
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+import re
 
 load_dotenv()
 
 app = Flask(__name__)
 
-
-# Get email credentials from environment variables
-EMAIL_SENDER = os.getenv("EMAIL_SENDER")
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
-
+# Email validation regex
+EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
 @app.route('/extract', methods=['POST'])
 def extract_data():
@@ -78,7 +76,7 @@ def extract_data():
     web_add_url = 'https://meet-sync-backend.vercel.app/api/websearch/web_add'
     headers = {
         'Content-Type': 'application/json',
-        'auth-token': auth_token  # Include the auth-token in the request headers
+        'auth-token': auth_token
     }
 
     response = requests.post(web_add_url, json=result_data, headers=headers)
@@ -87,7 +85,6 @@ def extract_data():
         return jsonify(result_data), 200
     else:
         return jsonify({"error": "Failed to store result in the database", "details": response.json()}), 500
-
 
 @app.route('/email', methods=['POST'])
 def handle_email():
@@ -98,26 +95,42 @@ def handle_email():
     if not isinstance(item, dict) or len(item) == 0:
         return jsonify({"error": "Request body should be an email object"}), 400
 
+    # Validate required fields
+    required_fields = ['from_email', 'recipient', 'subject', 'body']
+    missing_fields = [field for field in required_fields if field not in item or not item[field]]
+    if missing_fields:
+        return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
+    # Validate email addresses
+    from_email = item['from_email']
+    recipient = item['recipient']
+    if not re.match(EMAIL_REGEX, from_email):
+        return jsonify({"error": "Invalid sender email address"}), 400
+    if not re.match(EMAIL_REGEX, recipient):
+        return jsonify({"error": "Invalid recipient email address"}), 400
 
     try:
         msg = EmailMessage()
         msg['Subject'] = item['subject']
-        msg['From'] = EMAIL_SENDER
-        msg['To'] = item['recipient']
+        msg['From'] = from_email
+        msg['To'] = recipient
         msg.set_content(item['body'])
 
-        # Use Gmail SMTP server to send the email
+        # Note: This assumes the sender's email is a Gmail address and the app password is provided
+        # In a production environment, you should use a more secure method like OAuth2
+        smtp_password = os.getenv("EMAIL_PASSWORD")  # App-specific password for the sender's email
+        if not smtp_password:
+            return jsonify({"error": "SMTP password not configured"}), 500
+
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            smtp.login(from_email, smtp_password)
             smtp.send_message(msg)
         
-        # Respond with success
         return jsonify({"status": "success", "agent": "email", "message": "Email sent"}), 200
 
     except Exception as e:
         return jsonify({"status": "error", "agent": "email", "message": str(e)}), 500
 
-
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))  
-    app.run(debug=True, host='0.0.0.0', port=port)  
+    app.run(debug=True, host='0.0.0.0', port=port)

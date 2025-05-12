@@ -98,7 +98,7 @@ else:
     groq_client_with_instructor = instructor.from_groq(groq_client, mode=instructor.Mode.JSON)
 
 BACKEND_URLS = {
-    'email': 'https://meet-sync-backend-2.onrender.com/send_email',
+    'email': 'https://flask-email-app-6zfp.onrender.com/backend_service',
     'web_search': 'https://meet-sync-backend-2.onrender.com/extract',
     'note': 'https://meet-sync-backend.vercel.app/api/notes/addnote',
     'to_do': 'https://meet-sync-backend.vercel.app/api/todo/addtodo',

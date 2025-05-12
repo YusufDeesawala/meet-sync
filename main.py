@@ -10,14 +10,25 @@ from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import time
 import requests
+import logging
+from google_auth_oauthlib.flow import Flow
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
+from urllib.parse import parse_qs, urlparse
+
+# Load environment variables
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your-secure-secret-key')
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 BASE_URL = os.getenv('BASE_URL')
-
 
 CORS(app, resources={
     r"/*": {
@@ -31,6 +42,35 @@ CORS(app, resources={
 app.config['STATIC_FOLDER'] = 'static'
 app.config['UPLOAD_FOLDER'] = 'temp'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# OAuth 2.0 configuration
+SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+
+def get_gmail_credentials():
+    creds = None
+    if 'gmail_token' in session:
+        try:
+            creds = Credentials.from_authorized_user_info(eval(session['gmail_token']), SCOPES)
+            logger.debug("Loaded Gmail credentials from session")
+        except Exception as e:
+            logger.error(f"Error loading Gmail credentials: {e}")
+            session.pop('gmail_token', None)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                logger.debug("Attempting to refresh Gmail OAuth token")
+                creds.refresh(Request())
+                session['gmail_token'] = creds.to_json()
+                session.modified = True
+                logger.debug("Refreshed Gmail OAuth token successfully")
+            except Exception as e:
+                logger.error(f"Error refreshing Gmail token: {e}")
+                session.pop('gmail_token', None)
+                return None
+        else:
+            logger.debug("No valid Gmail credentials")
+            return None
+    return creds
 
 class ActionItem(BaseModel):
     type: str = Field(..., description="Type of action item: note, email, calendar_event, to_do, or web_search")
@@ -57,10 +97,10 @@ else:
     groq_client_with_instructor = instructor.from_groq(groq_client, mode=instructor.Mode.JSON)
 
 BACKEND_URLS = {
-    'email': 'https://meet-sync-backend-2.onrender.com/email',
+    'email': 'https://meet-sync-backend-2.onrender.com/send_email',
     'web_search': 'https://meet-sync-backend-2.onrender.com/extract',
     'note': 'https://meet-sync-backend.vercel.app/api/notes/addnote',
-    'to_do': 'https://meet-sync-backend.vercel.app/api/todo/addtodo',  
+    'to_do': 'https://meet-sync-backend.vercel.app/api/todo/addtodo',
     'calendar_event': 'https://calendar-backend.com/accept-event'  # Dummy link
 }
 
@@ -91,7 +131,7 @@ def convert_action_items(action_items):
         elif item_type == "web_search":
             web_searches.append({
                 "title": item.get("content", "")
-            })  
+            })
         elif item_type == "note":
             notes.append({
                 "title": item.get("title", ""),
@@ -202,36 +242,36 @@ def extract_action_items():
                 {
                     "role": "system",
                     "content": '''
-                                You are a smart meeting assistant. Given the transcript below, extract and classify actionable items by type.
-                                Supported action item types:
-                                - note
-                                - email
-                                - calendar_event
-                                - to_do
-                                - web_search
-                                Use the following JSON format for each action item:
-                                {
-                                "type": "<type>",
-                                "content": "<main description of the action item>",
-                                # Required for type 'email'
-                                "recipient": "<recipient email>",
-                                "subject": "<email subject>",
-                                "body": "<full email body>",
-                                # Required for type 'note'
-                                "title": "<short title>",
-                                "tag": "<tag or category for the note>",
-                                # Recommended for type 'to_do'
-                                "title": "<short to-do title>"
-                                }
-                                Notes:
-                                - For action items of type **note**, include `title`, `tag`, and `content` (used as the note description).
-                                - For type **email**, always include `recipient`, `subject`, and `body`.
-                                - For type **to_do**, include a short `title` and a longer `content` (used as the task description).
-                                - For type **calendar_event**, only include `type` and `content`.
-                                - For type **to_do**, include a short `title` and a longer `content` (used as the task description). The `title` is required.
-                                -   For type **web_search** only include `content`.
-                                - Respond with a JSON array of action items only.
-                                '''
+                        You are a smart meeting assistant. Given the transcript below, extract and classify actionable items by type.
+                        Supported action item types:
+                        - note
+                        - email
+                        - calendar_event
+                        - to_do
+                        - web_search
+                        Use the following JSON format for each action item:
+                        {
+                        "type": "<type>",
+                        "content": "<main description of the action item>",
+                        # Required for type 'email'
+                        "recipient": "<recipient email>",
+                        "subject": "<email subject>",
+                        "body": "<full email body>",
+                        # Required for type 'note'
+                        "title": "<short title>",
+                        "tag": "<tag or category for the note>",
+                        # Recommended for type 'to_do'
+                        "title": "<short to-do title>"
+                        }
+                        Notes:
+                        - For action items of type **note**, include `title`, `tag`, and `content` (used as the note description).
+                        - For type **email**, always include `recipient`, `subject`, and `body`.
+                        - For type **to_do**, include a short `title` and a longer `content` (used as the task description).
+                        - For type **calendar_event**, only include `type` and `content`.
+                        - For type **to_do**, include a short `title` and a longer `content` (used as the task description). The `title` is required.
+                        - For type **web_search** only include `content`.
+                        - Respond with a JSON array of action items only.
+                        '''
                 },
                 {
                     "role": "user",
@@ -342,7 +382,7 @@ def update_json_file():
             json.dump(items, f, indent=2)
         return jsonify({'message': 'Item updated successfully'}), 200
     except Exception as e:
-        return jsonify({'error': f'Error updating JSON file: {str(e)}'}), 500
+        return jsonify({'error': f'Error updating JSON file: {str(e)}'})
 
 @app.route('/reject-action-item', methods=['POST'])
 def reject_action_item():
@@ -383,7 +423,7 @@ def accept_action_item():
         if not request.is_json:
             return jsonify({'error': 'Request must contain JSON data'}), 400
         data = request.get_json()
-        file_type = data.get('file_type')
+        file_type = data.get('file Gmailtype')
         index = data.get('index')
         item = data.get('item')
         if not file_type or index is None or not isinstance(item, dict):
@@ -395,12 +435,23 @@ def accept_action_item():
         if not backend_url:
             return jsonify({'error': f'No backend URL configured for {file_type}'}), 500
         
-        # Get token either from session or localStorage
-        token = session.get('token')
-        if not token:
-            return jsonify({'error': 'Authentication token not found'}), 401
-            
-        headers = {'Content-Type': 'application/json', 'auth-token': token}
+        headers = {'Content-Type': 'application/json'}
+        if backend_type == 'email':
+            creds = get_gmail_credentials()
+            if not creds:
+                return jsonify({'error': 'Gmail authentication required', 'redirect': url_for('authorize')}), 401
+            headers['Authorization'] = f'Bearer {creds.token}'
+            # Add sender_email to item, assuming user_email is stored in session
+            if 'user_email' not in session:
+                return jsonify({'error': 'User email not found. Please re-authenticate.'}), 401
+            item['sender_email'] = session['user_email']
+        else:
+            # For non-email actions, use auth-token from session
+            token = session.get('token')
+            if not token:
+                return jsonify({'error': 'Authentication token not found'}), 401
+            headers['auth-token'] = token
+        
         response = requests.post(backend_url, json=item, headers=headers)
         
         if response.status_code == 200:
@@ -436,7 +487,6 @@ def home():
     app_url = os.getenv('APP_URL', 'https://your-default-url')
     return render_template('index.html', app_url=app_url, token=session['token'])
 
-# Login route
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -448,10 +498,90 @@ def login():
         if res.status_code == 200:
             token = res.json().get("authToken")
             session['token'] = token
-            return redirect(url_for('home'))  # Corrected: Redirect to /home route
+            return redirect(url_for('home'))
         flash("Login failed!", "danger")
     return render_template('login.html')
 
+@app.route('/authorize')
+def authorize():
+    if 'token' not in session:
+        return redirect(url_for('login'))
+    try:
+        redirect_uri = url_for('oauth2callback', _external=True, _scheme='https')
+        client_config = {
+            "web": {
+                "client_id": os.getenv('GOOGLE_CLIENT_ID'),
+                "client_secret": os.getenv('GOOGLE_CLIENT_SECRET'),
+                "redirect_uris": [redirect_uri],
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token"
+            }
+        }
+        flow = Flow.from_client_config(client_config, SCOPES)
+        flow.redirect_uri = redirect_uri
+        authorization_url, state = flow.authorization_url(
+            access_type='offline',
+            include_granted_scopes='true',
+            prompt='consent'
+        )
+        session['state'] = state
+        session.modified = True
+        logger.debug(f"Generated authorization URL: {authorization_url}")
+        return redirect(authorization_url)
+    except Exception as e:
+        logger.error(f"Error initiating OAuth flow: {e}")
+        flash(f"Error initiating Gmail authorization: {str(e)}", "danger")
+        return redirect(url_for('home'))
+
+@app.route('/oauth2callback')
+def oauth2callback():
+    if 'token' not in session:
+        flash("Session expired. Please log in again.", "danger")
+        return redirect(url_for('login'))
+    
+    parsed_url = urlparse(request.url)
+    query_params = parse_qs(parsed_url.query)
+    if 'error' in query_params:
+        error = query_params['error'][0]
+        logger.error(f"Google OAuth error: {error}")
+        flash(f"Google authorization failed: {error}", "danger")
+        return redirect(url_for('home'))
+    
+    state = session.get('state')
+    response_state = query_params.get('state', [None])[0]
+    if not state or state != response_state:
+        logger.error(f"State mismatch. Session state: {state}, Response state: {response_state}")
+        flash("Invalid OAuth state. Please try again.", "danger")
+        session.pop('state', None)
+        return redirect(url_for('home'))
+    
+    try:
+        redirect_uri = url_for('oauth2callback', _external=True, _scheme='https')
+        client_config = {
+            "web": {
+                "client_id": os.getenv('GOOGLE_CLIENT_ID'),
+                "client_secret": os.getenv('GOOGLE_CLIENT_SECRET'),
+                "redirect_uris": [redirect_uri],
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token"
+            }
+        }
+        flow = Flow.from_client_config(client_config, SCOPES)
+        flow.redirect_uri = redirect_uri
+        flow.fetch_token(authorization_response=request.url)
+        credentials = flow.credentials
+        session['gmail_token'] = credentials.to_json()
+        session['user_email'] = credentials.id_token.get('email', '')  # Store user email
+        session.modified = True
+        logger.debug("OAuth token fetched and stored in session")
+        session.pop('state', None)
+        flash("Gmail access authorized!", "success")
+        return redirect(url_for('home'))
+    except Exception as e:
+        logger.error(f"OAuth callback error: {str(e)}")
+        flash(f"Authorization failed: {str(e)}", "danger")
+        return redirect(url_for('home'))
+
 if __name__ == '__main__':
-    port = int(os.getenv("PORT", 5000))  
+    port = int(os.getenv("PORT", 5000))
     app.run(debug=False, host='0.0.0.0', port=port)

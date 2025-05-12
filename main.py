@@ -15,6 +15,7 @@ from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from urllib.parse import parse_qs, urlparse
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -382,7 +383,7 @@ def update_json_file():
             json.dump(items, f, indent=2)
         return jsonify({'message': 'Item updated successfully'}), 200
     except Exception as e:
-        return jsonify({'error': f'Error updating JSON file: {str(e)}'})
+        return jsonify({'error': f'Error updating JSON file: {str(e)}'}), 500
 
 @app.route('/reject-action-item', methods=['POST'])
 def reject_action_item():
@@ -423,7 +424,7 @@ def accept_action_item():
         if not request.is_json:
             return jsonify({'error': 'Request must contain JSON data'}), 400
         data = request.get_json()
-        file_type = data.get('file Gmailtype')
+        file_type = data.get('file_Gmailtype')
         index = data.get('index')
         item = data.get('item')
         if not file_type or index is None or not isinstance(item, dict):
@@ -490,70 +491,63 @@ def home():
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        payload = {
-            "email": request.form['email'],
-            "password": request.form['password']
-        }
-        res = requests.post(f"{BASE_URL}/api/auth/login", json=payload)
-        if res.status_code == 200:
-            token = res.json().get("authToken")
-            session['token'] = token
-            return redirect(url_for('home'))
-        flash("Login failed!", "danger")
-    return render_template('login.html')
-
-@app.route('/authorize')
-def authorize():
-    if 'token' not in session:
-        return redirect(url_for('login'))
-    try:
-        redirect_uri = url_for('oauth2callback', _external=True, _scheme='https')
-        client_config = {
-            "web": {
-                "client_id": os.getenv('GOOGLE_CLIENT_ID'),
-                "client_secret": os.getenv('GOOGLE_CLIENT_SECRET'),
-                "redirect_uris": [redirect_uri],
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token"
+        try:
+            # Store email input as a login hint (optional)
+            email = request.form.get('email', '')
+            if email:
+                session['login_email'] = email
+                session.modified = True
+            
+            # Initiate Google OAuth 2.0 flow
+            redirect_uri = url_for('oauth2callback', _external=True, _scheme='https')
+            client_config = {
+                "web": {
+                    "client_id": os.getenv('GOOGLE_CLIENT_ID'),
+                    "client_secret": os.getenv('GOOGLE_CLIENT_SECRET'),
+                    "redirect_uris": [redirect_uri],
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token"
+                }
             }
-        }
-        flow = Flow.from_client_config(client_config, SCOPES)
-        flow.redirect_uri = redirect_uri
-        authorization_url, state = flow.authorization_url(
-            access_type='offline',
-            include_granted_scopes='true',
-            prompt='consent'
-        )
-        session['state'] = state
-        session.modified = True
-        logger.debug(f"Generated authorization URL: {authorization_url}")
-        return redirect(authorization_url)
-    except Exception as e:
-        logger.error(f"Error initiating OAuth flow: {e}")
-        flash(f"Error initiating Gmail authorization: {str(e)}", "danger")
-        return redirect(url_for('home'))
+            flow = Flow.from_client_config(client_config, SCOPES)
+            flow.redirect_uri = redirect_uri
+            authorization_url, state = flow.authorization_url(
+                access_type='offline',
+                include_granted_scopes='true',
+                prompt='consent',
+                login_hint=email if email else None
+            )
+            session['state'] = state
+            session.modified = True
+            logger.debug(f"Generated Google authorization URL: {authorization_url}")
+            return redirect(authorization_url)
+        except Exception as e:
+            logger.error(f"Error initiating Google OAuth flow: {e}")
+            flash(f"Error initiating login: {str(e)}", "danger")
+            return redirect(url_for('login'))
+    
+    return render_template('login.html')
 
 @app.route('/oauth2callback')
 def oauth2callback():
-    if 'token' not in session:
-        flash("Session expired. Please log in again.", "danger")
-        return redirect(url_for('login'))
-    
     parsed_url = urlparse(request.url)
     query_params = parse_qs(parsed_url.query)
     if 'error' in query_params:
         error = query_params['error'][0]
         logger.error(f"Google OAuth error: {error}")
-        flash(f"Google authorization failed: {error}", "danger")
-        return redirect(url_for('home'))
+        flash(f"Login failed: {error}", "danger")
+        session.pop('login_email', None)
+        session.pop('state', None)
+        return redirect(url_for('login'))
     
     state = session.get('state')
     response_state = query_params.get('state', [None])[0]
     if not state or state != response_state:
         logger.error(f"State mismatch. Session state: {state}, Response state: {response_state}")
         flash("Invalid OAuth state. Please try again.", "danger")
+        session.pop('login_email', None)
         session.pop('state', None)
-        return redirect(url_for('home'))
+        return redirect(url_for('login'))
     
     try:
         redirect_uri = url_for('oauth2callback', _external=True, _scheme='https')
@@ -571,16 +565,20 @@ def oauth2callback():
         flow.fetch_token(authorization_response=request.url)
         credentials = flow.credentials
         session['gmail_token'] = credentials.to_json()
-        session['user_email'] = credentials.id_token.get('email', '')  # Store user email
+        session['user_email'] = credentials.id_token.get('email', '')
+        session['token'] = str(uuid.uuid4())  # Dummy token for compatibility
         session.modified = True
-        logger.debug("OAuth token fetched and stored in session")
+        logger.debug("Google OAuth token fetched and stored in session")
+        session.pop('login_email', None)
         session.pop('state', None)
-        flash("Gmail access authorized!", "success")
+        flash("Logged in successfully!", "success")
         return redirect(url_for('home'))
     except Exception as e:
         logger.error(f"OAuth callback error: {str(e)}")
-        flash(f"Authorization failed: {str(e)}", "danger")
-        return redirect(url_for('home'))
+        flash(f"Login failed: {str(e)}", "danger")
+        session.pop('login_email', None)
+        session.pop('state', None)
+        return redirect(url_for('login'))
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))

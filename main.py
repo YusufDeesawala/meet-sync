@@ -427,38 +427,46 @@ def reject_action_item():
 def accept_action_item():
     try:
         if not request.is_json:
+            logger.error("Request must contain JSON data")
             return jsonify({'error': 'Request must contain JSON data'}), 400
         data = request.get_json()
-        file_type = data.get('file_Gmailtype')
+        logger.debug(f"Received data: {data}")
+        file_type = data.get('file_type')
         index = data.get('index')
         item = data.get('item')
         if not file_type or index is None or not isinstance(item, dict):
+            logger.error(f"Missing or invalid file_type: {file_type}, index: {index}, item: {item}")
             return jsonify({'error': 'Missing or invalid file_type, index, or item'}), 400
         backend_type = FILE_TYPE_TO_BACKEND_TYPE.get(file_type)
         if not backend_type:
+            logger.error(f"Invalid file_type: {file_type}")
             return jsonify({'error': f'Invalid file_type: {file_type}'}), 400
         backend_url = BACKEND_URLS.get(backend_type)
         if not backend_url:
+            logger.error(f"No backend URL configured for {file_type}")
             return jsonify({'error': f'No backend URL configured for {file_type}'}), 500
         
         headers = {'Content-Type': 'application/json'}
         if backend_type == 'email':
             creds = get_gmail_credentials()
             if not creds:
+                logger.error("Gmail authentication required")
                 return jsonify({'error': 'Gmail authentication required', 'redirect': url_for('authorize')}), 401
             headers['Authorization'] = f'Bearer {creds.token}'
-            # Add sender_email to item, assuming user_email is stored in session
             if 'user_email' not in session:
+                logger.error("User email not found in session")
                 return jsonify({'error': 'User email not found. Please re-authenticate.'}), 401
             item['sender_email'] = session['user_email']
         else:
-            # For non-email actions, use auth-token from session
             token = session.get('token')
             if not token:
+                logger.error("Authentication token not found")
                 return jsonify({'error': 'Authentication token not found'}), 401
             headers['auth-token'] = token
         
-        response = requests.post(backend_url, json=item, headers=headers)
+        logger.debug(f"Sending request to {backend_url} with headers: {headers} and payload: [{item}]")
+        response = requests.post(backend_url, json=[item], headers=headers)
+        logger.debug(f"Backend response: status={response.status_code}, text={response.text}")
         
         if response.status_code == 200:
             file_map = {
@@ -478,12 +486,14 @@ def accept_action_item():
                         with open(file_path, 'w', encoding='utf-8') as f:
                             json.dump(items, f, indent=2)
                 except Exception as e:
-                    print(f"[ERROR] Failed to delete item from {file_path}: {str(e)}")
+                    logger.error(f"Failed to delete item from {file_path}: {str(e)}")
             return jsonify({'message': 'Item accepted and removed successfully'}), 200
         else:
             error_msg = response.text or 'Unknown error'
+            logger.error(f"Backend request failed: status={response.status_code}, error={error_msg}")
             return jsonify({'error': f'Failed to accept item: {error_msg}'}), response.status_code
     except Exception as e:
+        logger.error(f"Error accepting action item: {str(e)}")
         return jsonify({'error': f'Error accepting action item: {str(e)}'}), 500
 
 @app.route('/home')

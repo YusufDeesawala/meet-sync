@@ -45,7 +45,11 @@ app.config['UPLOAD_FOLDER'] = 'temp'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # OAuth 2.0 configuration
-SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.send',
+    'openid',
+    'https://www.googleapis.com/auth/userinfo.email'
+]
 
 def get_gmail_credentials():
     creds = None
@@ -564,9 +568,30 @@ def oauth2callback():
         flow.redirect_uri = redirect_uri
         flow.fetch_token(authorization_response=request.url)
         credentials = flow.credentials
+        logger.debug(f"Credentials: {credentials.__dict__}")
         session['gmail_token'] = credentials.to_json()
-        session['user_email'] = credentials.id_token.get('email', '')
-        session['token'] = str(uuid.uuid4())  # Dummy token for compatibility
+
+        # Try to get email from id_token or userinfo endpoint
+        user_email = None
+        if credentials.id_token:
+            user_email = credentials.id_token.get('email', '')
+        else:
+            headers = {'Authorization': f'Bearer {credentials.access_token}'}
+            response = requests.get('https://www.googleapis.com/oauth2/v3/userinfo', headers=headers)
+            if response.status_code == 200:
+                user_info = response.json()
+                user_email = user_info.get('email', '')
+            else:
+                logger.error(f"Failed to fetch user info: {response.text}")
+                flash("Failed to retrieve user email.", "danger")
+                return redirect(url_for('login'))
+
+        if not user_email:
+            flash("No email found in OAuth response.", "danger")
+            return redirect(url_for('login'))
+
+        session['user_email'] = user_email
+        session['token'] = str(uuid.uuid4())
         session.modified = True
         logger.debug("Google OAuth token fetched and stored in session")
         session.pop('login_email', None)

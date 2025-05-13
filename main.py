@@ -16,6 +16,7 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from urllib.parse import parse_qs, urlparse
 import uuid
+import jwt
 
 # Load environment variables
 load_dotenv()
@@ -571,16 +572,30 @@ def oauth2callback():
         logger.debug(f"Credentials: {credentials.__dict__}")
         session['gmail_token'] = credentials.to_json()
 
-        # Try to get email from id_token or userinfo endpoint
+        # Try to get email from id_token
         user_email = None
         if credentials.id_token:
-            user_email = credentials.id_token.get('email', '')
+            try:
+                # Decode the JWT id_token
+                decoded_token = jwt.decode(
+                    credentials.id_token,
+                    options={"verify_signature": False},  # Disable signature verification for simplicity
+                )
+                user_email = decoded_token.get('email', '')
+                logger.debug(f"Decoded id_token: {decoded_token}")
+            except jwt.InvalidTokenError as e:
+                logger.error(f"Failed to decode id_token: {str(e)}")
         else:
+            logger.debug("No id_token in credentials, falling back to userinfo endpoint")
+
+        # Fallback to Userinfo API if id_token is missing or decoding fails
+        if not user_email:
             headers = {'Authorization': f'Bearer {credentials.access_token}'}
             response = requests.get('https://www.googleapis.com/oauth2/v3/userinfo', headers=headers)
             if response.status_code == 200:
                 user_info = response.json()
                 user_email = user_info.get('email', '')
+                logger.debug(f"Userinfo response: {user_info}")
             else:
                 logger.error(f"Failed to fetch user info: {response.text}")
                 flash("Failed to retrieve user email.", "danger")

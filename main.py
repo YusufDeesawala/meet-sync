@@ -628,7 +628,7 @@ def oauth2callback():
         flash(f"Login failed: {str(e)}", "danger")
         session.pop('login_email', None)
         session.pop('state', None)
-        return redirect(url_for('login'))
+        
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
